@@ -21,6 +21,14 @@ def skin_collection_from_index(index=1):
             return scene.skis_skin_coll_5
         case 6:
             return scene.skis_skin_coll_6
+        case 7:
+            return scene.skis_skin_coll_7
+        case 8:
+            return scene.skis_skin_coll_8
+        case 9:
+            return scene.skis_skin_coll_9
+        case 10:
+            return scene.skis_skin_coll_10
 
 
 def use_skin_collection_or_active(index=1):
@@ -69,6 +77,15 @@ class SKIS_OP_set_skin_collection(bpy.types.Operator):
                 bpy.context.scene.skis_skin_coll_5.skin_coll = bpy.context.collection
             case 6:
                 bpy.context.scene.skis_skin_coll_6.skin_coll = bpy.context.collection
+            case 7:
+                bpy.context.scene.skis_skin_coll_7.skin_coll = bpy.context.collection
+            case 8:
+                bpy.context.scene.skis_skin_coll_8.skin_coll = bpy.context.collection
+            case 9:
+                bpy.context.scene.skis_skin_coll_9.skin_coll = bpy.context.collection
+            case 10:
+                bpy.context.scene.skis_skin_coll_10.skin_coll = bpy.context.collection
+
 
         return {'FINISHED'}
 

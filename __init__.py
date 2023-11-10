@@ -91,7 +91,18 @@ def register():
     bpy.types.Scene.skis_skin_coll_6 = bpy.props.PointerProperty(
         type=SKIS_PG_skin_collection
     )
-
+    bpy.types.Scene.skis_skin_coll_7 = bpy.props.PointerProperty(
+        type=SKIS_PG_skin_collection
+    )
+    bpy.types.Scene.skis_skin_coll_8 = bpy.props.PointerProperty(
+        type=SKIS_PG_skin_collection
+    )
+    bpy.types.Scene.skis_skin_coll_9 = bpy.props.PointerProperty(
+        type=SKIS_PG_skin_collection
+    )
+    bpy.types.Scene.skis_skin_coll_10 = bpy.props.PointerProperty(
+        type=SKIS_PG_skin_collection
+    )
 
 def unregister():
 

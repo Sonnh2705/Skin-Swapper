@@ -11,9 +11,9 @@ class SKIS_preferences(bpy.types.AddonPreferences):
 
     skis_skin_collection_count: bpy.props.IntProperty(
         name='Skin Collection Count',
-        default=1,
+        default=7,
         min=1,
-        max=6
+        max=10,
     )
 
     def draw(self, context):

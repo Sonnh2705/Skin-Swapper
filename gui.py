@@ -37,10 +37,8 @@ class SKIS_PT_side_panel(bpy.types.Panel):
         # hide all non active button
 
         col = layout.column(align=True)
-        col.separator()
         col.operator('skis.hide_all_non_active_skin', icon='GROUP_VERTEX')
         col.scale_y = 1.5
-        col.separator()
 
         # skin collections
 

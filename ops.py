@@ -29,6 +29,11 @@ def skin_collection_from_index(index=1):
             return scene.skis_skin_coll_9
         case 10:
             return scene.skis_skin_coll_10
+        case 11:
+            return scene.skis_skin_coll_11
+        case 12:
+            return scene.skis_skin_coll_12
+
 
 
 def use_skin_collection_or_active(index=1):
@@ -58,6 +63,7 @@ def unhide_objs(obj):
 class SKIS_OP_set_skin_collection(bpy.types.Operator):
     bl_idname = 'skis.set_skin_collection'
     bl_label = 'Set skin collection'
+    bl_description = 'Set active collection as skin collection at index'
     bl_options = {'REGISTER', 'UNDO'}
 
     index: bpy.props.IntProperty()
@@ -85,6 +91,11 @@ class SKIS_OP_set_skin_collection(bpy.types.Operator):
                 bpy.context.scene.skis_skin_coll_9.skin_coll = bpy.context.collection
             case 10:
                 bpy.context.scene.skis_skin_coll_10.skin_coll = bpy.context.collection
+            case 11:
+                bpy.context.scene.skis_skin_coll_11.skin_coll = bpy.context.collection
+            case 12:
+                bpy.context.scene.skis_skin_coll_12.skin_coll = bpy.context.collection
+
 
 
         return {'FINISHED'}

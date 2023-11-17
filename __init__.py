@@ -35,6 +35,7 @@ bl_info = {
 class SKIS_PG_skin_collection(bpy.types.PropertyGroup):
 
     skin_coll: bpy.props.PointerProperty(name='Skin collection', type=bpy.types.Collection)
+    collapse: bpy.props.BoolProperty(name='Skin collection collapse', default=True)
     show: bpy.props.BoolProperty(name='Skin collection visible', default=True)
     use_flt: bpy.props.BoolProperty(name='Filter item in collection', default=False)
     flt_type: bpy.props.EnumProperty(
@@ -101,6 +102,12 @@ def register():
         type=SKIS_PG_skin_collection
     )
     bpy.types.Scene.skis_skin_coll_10 = bpy.props.PointerProperty(
+        type=SKIS_PG_skin_collection
+    )
+    bpy.types.Scene.skis_skin_coll_11 = bpy.props.PointerProperty(
+        type=SKIS_PG_skin_collection
+    )
+    bpy.types.Scene.skis_skin_coll_12 = bpy.props.PointerProperty(
         type=SKIS_PG_skin_collection
     )
 

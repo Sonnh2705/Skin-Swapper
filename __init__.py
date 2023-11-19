@@ -13,12 +13,21 @@
 
 import bpy
 
-from .ops import (SKIS_OP_set_skin_collection, SKIS_OP_to_active_skin_in_collection,
-                  SKIS_OP_hide_non_active_skin_in_collection, SKIS_OP_hide_all_non_active_skin,
-                  SKIS_OP_to_next_skin_in_collection, SKIS_OP_to_prev_skin_in_collection,
-                  SKIS_OP_to_first_skin_in_collection, SKIS_OP_to_last_skin_in_collection,
+from .ops import (SKIS_OP_add_skin_collection_to_list,
+                  SKIS_OP_remove_skin_collection_in_list,
+                  SKIS_OP_set_skin_collection,
+                  SKIS_OP_to_active_skin_in_collection,
+                  SKIS_OP_hide_non_active_skin_in_collection,
+                  SKIS_OP_hide_all_non_active_skin,
+                  SKIS_OP_to_next_skin_in_collection,
+                  SKIS_OP_to_prev_skin_in_collection,
+                  SKIS_OP_to_first_skin_in_collection,
+                  SKIS_OP_to_last_skin_in_collection,
                   )
-from .gui import SKIS_PT_side_panel, SKIS_UL_skin_list
+from .gui import (SKIS_PT_side_panel_collection_list,
+                  SKIS_PT_side_panel_skin_list,
+                  SKIS_UL_skin_list, SKIS_UL_collection_list
+                  )
 from .pref import SKIS_preferences
 
 bl_info = {
@@ -48,6 +57,8 @@ class SKIS_PG_skin_collection(bpy.types.PropertyGroup):
 
 
 classes = (SKIS_PG_skin_collection,
+           SKIS_OP_add_skin_collection_to_list,
+           SKIS_OP_remove_skin_collection_in_list,
            SKIS_OP_set_skin_collection,
            SKIS_OP_to_active_skin_in_collection,
            SKIS_OP_hide_non_active_skin_in_collection,
@@ -56,8 +67,10 @@ classes = (SKIS_PG_skin_collection,
            SKIS_OP_to_prev_skin_in_collection,
            SKIS_OP_to_first_skin_in_collection,
            SKIS_OP_to_last_skin_in_collection,
-           SKIS_PT_side_panel,
+           SKIS_PT_side_panel_collection_list,
+           SKIS_PT_side_panel_skin_list,
            SKIS_UL_skin_list,
+           SKIS_UL_collection_list,
            SKIS_preferences,
            )
 
@@ -68,48 +81,19 @@ def register():
     for cls in classes:
         register_class(cls)
 
+    bpy.types.Scene.skis_skin_collection_list = bpy.props.CollectionProperty(
+        type=SKIS_PG_skin_collection
+    )
+    bpy.types.Scene.skis_skin_collection_list_index = bpy.props.IntProperty(
+        default=0
+    )
     bpy.types.Collection.skis_list_index = bpy.props.IntProperty(
         default=0
     )
     bpy.types.Collection.skis_active_skin = bpy.props.PointerProperty(
         type=bpy.types.Object
     )
-    bpy.types.Scene.skis_skin_coll_1 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_2 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_3 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_4 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_5 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_6 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_7 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_8 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_9 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_10 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_11 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
-    bpy.types.Scene.skis_skin_coll_12 = bpy.props.PointerProperty(
-        type=SKIS_PG_skin_collection
-    )
+
 
 def unregister():
 
@@ -117,11 +101,7 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
 
+    del bpy.types.Scene.skis_skin_collection_list
+    del bpy.types.Scene.skis_skin_collection_list_index
     del bpy.types.Collection.skis_list_index
     del bpy.types.Collection.skis_active_skin
-    del bpy.types.Scene.skis_skin_coll_1
-    del bpy.types.Scene.skis_skin_coll_2
-    del bpy.types.Scene.skis_skin_coll_3
-    del bpy.types.Scene.skis_skin_coll_4
-    del bpy.types.Scene.skis_skin_coll_5
-    del bpy.types.Scene.skis_skin_coll_6

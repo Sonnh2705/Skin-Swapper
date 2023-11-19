@@ -5,43 +5,12 @@ from .pref import prefs
 # FUNCTION
 
 
-def skin_collection_from_index(index=1):
+def use_skin_collection_or_active(index=0):
 
-    scene = bpy.context.scene
-    match index:
-        case 1:
-            return scene.skis_skin_coll_1
-        case 2:
-            return scene.skis_skin_coll_2
-        case 3:
-            return scene.skis_skin_coll_3
-        case 4:
-            return scene.skis_skin_coll_4
-        case 5:
-            return scene.skis_skin_coll_5
-        case 6:
-            return scene.skis_skin_coll_6
-        case 7:
-            return scene.skis_skin_coll_7
-        case 8:
-            return scene.skis_skin_coll_8
-        case 9:
-            return scene.skis_skin_coll_9
-        case 10:
-            return scene.skis_skin_coll_10
-        case 11:
-            return scene.skis_skin_coll_11
-        case 12:
-            return scene.skis_skin_coll_12
-
-
-
-def use_skin_collection_or_active(index=1):
-
-    if skin_collection_from_index(index).skin_coll is None:
+    if bpy.context.scene.skis_skin_collection_list[index].skin_coll is None:
         return bpy.context.collection
     else:
-        return skin_collection_from_index(index).skin_coll
+        return bpy.context.scene.skis_skin_collection_list[index].skin_coll
 
 
 def hide_objs_in_coll(collection):
@@ -60,6 +29,36 @@ def unhide_objs(obj):
 # OPERATOR
 
 
+class SKIS_OP_add_skin_collection_to_list(bpy.types.Operator):
+    bl_idname = 'skis.add_skin_collection_to_list'
+    bl_label = 'Add skin collection to list'
+    bl_description = 'Add a new skin collection to list'
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+
+        bpy.context.scene.skis_skin_collection_list.add()
+
+        return {'FINISHED'}
+
+
+class SKIS_OP_remove_skin_collection_in_list(bpy.types.Operator):
+    bl_idname = 'skis.remove_skin_collection_in_list'
+    bl_label = 'Remove skin collection in list'
+    bl_description = 'Remove a skin collection in list'
+    bl_options = {'REGISTER'}
+
+    def execute(self, context):
+
+        bpy.context.scene.skis_skin_collection_list.remove(
+            bpy.context.scene.skis_skin_collection_list_index
+            if bpy.context.scene.skis_skin_collection_list_index
+            else 0
+        )
+
+        return {'FINISHED'}
+
+
 class SKIS_OP_set_skin_collection(bpy.types.Operator):
     bl_idname = 'skis.set_skin_collection'
     bl_label = 'Set skin collection'
@@ -70,33 +69,7 @@ class SKIS_OP_set_skin_collection(bpy.types.Operator):
 
     def execute(self, context):
 
-        match self.index:
-            case 1:
-                bpy.context.scene.skis_skin_coll_1.skin_coll = bpy.context.collection
-            case 2:
-                bpy.context.scene.skis_skin_coll_2.skin_coll = bpy.context.collection
-            case 3:
-                bpy.context.scene.skis_skin_coll_3.skin_coll = bpy.context.collection
-            case 4:
-                bpy.context.scene.skis_skin_coll_4.skin_coll = bpy.context.collection
-            case 5:
-                bpy.context.scene.skis_skin_coll_5.skin_coll = bpy.context.collection
-            case 6:
-                bpy.context.scene.skis_skin_coll_6.skin_coll = bpy.context.collection
-            case 7:
-                bpy.context.scene.skis_skin_coll_7.skin_coll = bpy.context.collection
-            case 8:
-                bpy.context.scene.skis_skin_coll_8.skin_coll = bpy.context.collection
-            case 9:
-                bpy.context.scene.skis_skin_coll_9.skin_coll = bpy.context.collection
-            case 10:
-                bpy.context.scene.skis_skin_coll_10.skin_coll = bpy.context.collection
-            case 11:
-                bpy.context.scene.skis_skin_coll_11.skin_coll = bpy.context.collection
-            case 12:
-                bpy.context.scene.skis_skin_coll_12.skin_coll = bpy.context.collection
-
-
+        bpy.context.scene.skis_skin_collection_list[self.index].skin_coll = bpy.context.collection
 
         return {'FINISHED'}
 
@@ -112,7 +85,8 @@ class SKIS_OP_to_active_skin_in_collection(bpy.types.Operator):
     def execute(self, context):
 
         hide_objs_in_coll(use_skin_collection_or_active(self.coll_index))
-        use_skin_collection_or_active(self.coll_index).skis_active_skin = bpy.data.objects[self.skin_name]
+        use_skin_collection_or_active(
+            self.coll_index).skis_active_skin = bpy.data.objects[self.skin_name]
         unhide_objs(bpy.data.objects[self.skin_name])
 
         return {'FINISHED'}
@@ -128,7 +102,8 @@ class SKIS_OP_hide_non_active_skin_in_collection(bpy.types.Operator):
     def execute(self, context):
 
         hide_objs_in_coll(use_skin_collection_or_active(self.coll_index))
-        unhide_objs(use_skin_collection_or_active(self.coll_index).skis_active_skin)
+        unhide_objs(use_skin_collection_or_active(
+            self.coll_index).skis_active_skin)
 
         return {'FINISHED'}
 
@@ -141,9 +116,10 @@ class SKIS_OP_hide_all_non_active_skin(bpy.types.Operator):
 
         hide_objs_in_coll(bpy.context.scene.collection)
 
-        for index in range(1, prefs().skis_skin_collection_count + 1):
-            if skin_collection_from_index(index).show:
-                unhide_objs(use_skin_collection_or_active(index).skis_active_skin)
+        for index in range(0, len(bpy.context.scene.skis_skin_collection_list)):
+            if bpy.context.scene.skis_skin_collection_list[index].show:
+                unhide_objs(use_skin_collection_or_active(
+                    index).skis_active_skin)
 
         return {'FINISHED'}
 
@@ -153,7 +129,8 @@ def sort_item_in_collection(collection):
     if use_skin_collection_or_active(collection) is bpy.context.view_layer.layer_collection.collection:
         sort_coll = bpy.context.view_layer.objects.keys().copy()
     else:
-        sort_coll = use_skin_collection_or_active(collection).all_objects.keys().copy()
+        sort_coll = use_skin_collection_or_active(
+            collection).all_objects.keys().copy()
     sort_coll.sort(key=str.casefold)
 
     return sort_coll
@@ -172,6 +149,7 @@ class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
 
         coll = use_skin_collection_or_active(self.coll_index)
         sort_coll = sort_item_in_collection(self.coll_index)
+        collection_list = bpy.context.scene.skis_skin_collection_list
 
         index = sort_coll.index(coll.skis_active_skin.name)
         next_index = index + 1
@@ -184,10 +162,10 @@ class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
 
         # skip hide viewport and filtered items
 
-        is_flt = coll.skis_active_skin.type != skin_collection_from_index(self.coll_index).flt_type
+        is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
         is_hide_viewport = coll.skis_active_skin.hide_viewport
 
-        if not skin_collection_from_index(self.coll_index).use_flt:
+        if not collection_list[self.coll_index].use_flt:
             is_flt = False
 
         while is_hide_viewport or is_flt:
@@ -201,8 +179,8 @@ class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
 
-            if skin_collection_from_index(self.coll_index).use_flt:
-                is_flt = coll.skis_active_skin.type != skin_collection_from_index(self.coll_index).flt_type
+            if collection_list[self.coll_index].use_flt:
+                is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
 
         unhide_objs(coll.all_objects[coll.skis_active_skin.name])
 
@@ -222,6 +200,7 @@ class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
 
         coll = use_skin_collection_or_active(self.coll_index)
         sort_coll = sort_item_in_collection(self.coll_index)
+        collection_list = bpy.context.scene.skis_skin_collection_list
 
         index = sort_coll.index(coll.skis_active_skin.name)
         prev_index = index - 1
@@ -232,10 +211,10 @@ class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
 
         # skip hide viewport and filtered items
 
-        is_flt = coll.skis_active_skin.type != skin_collection_from_index(self.coll_index).flt_type
+        is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
         is_hide_viewport = coll.skis_active_skin.hide_viewport
 
-        if not skin_collection_from_index(self.coll_index).use_flt:
+        if not collection_list[self.coll_index].use_flt:
             is_flt = False
 
         while is_hide_viewport or is_flt:
@@ -247,8 +226,8 @@ class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
 
-            if skin_collection_from_index(self.coll_index).use_flt:
-                is_flt = coll.skis_active_skin.type != skin_collection_from_index(self.coll_index).flt_type
+            if collection_list[self.coll_index].use_flt:
+                is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
 
         unhide_objs(coll.all_objects[coll.skis_active_skin.name])
 
@@ -268,6 +247,7 @@ class SKIS_OP_to_first_skin_in_collection(bpy.types.Operator):
 
         coll = use_skin_collection_or_active(self.coll_index)
         sort_coll = sort_item_in_collection(self.coll_index)
+        collection_list = bpy.context.scene.skis_skin_collection_list
 
         first_index = 0
 
@@ -277,10 +257,10 @@ class SKIS_OP_to_first_skin_in_collection(bpy.types.Operator):
 
         # skip hide viewport and filtered items
 
-        is_flt = coll.skis_active_skin.type != skin_collection_from_index(self.coll_index).flt_type
+        is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
         is_hide_viewport = coll.skis_active_skin.hide_viewport
 
-        if not skin_collection_from_index(self.coll_index).use_flt:
+        if not collection_list[self.coll_index].use_flt:
             is_flt = False
 
         while is_hide_viewport or is_flt:
@@ -292,8 +272,8 @@ class SKIS_OP_to_first_skin_in_collection(bpy.types.Operator):
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
 
-            if skin_collection_from_index(self.coll_index).use_flt:
-                is_flt = coll.skis_active_skin.type != skin_collection_from_index(self.coll_index).flt_type
+            if collection_list[self.coll_index].use_flt:
+                is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
 
         unhide_objs(coll.all_objects[coll.skis_active_skin.name])
 
@@ -313,6 +293,7 @@ class SKIS_OP_to_last_skin_in_collection(bpy.types.Operator):
 
         coll = use_skin_collection_or_active(self.coll_index)
         sort_coll = sort_item_in_collection(self.coll_index)
+        collection_list = bpy.context.scene.skis_skin_collection_list
 
         last_index = len(sort_coll) - 1
 
@@ -322,10 +303,10 @@ class SKIS_OP_to_last_skin_in_collection(bpy.types.Operator):
 
         # skip hide viewport and filtered items
 
-        is_flt = coll.skis_active_skin.type != skin_collection_from_index(self.coll_index).flt_type
+        is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
         is_hide_viewport = coll.skis_active_skin.hide_viewport
 
-        if not skin_collection_from_index(self.coll_index).use_flt:
+        if not collection_list[self.coll_index].use_flt:
             is_flt = False
 
         while is_hide_viewport or is_flt:
@@ -337,8 +318,8 @@ class SKIS_OP_to_last_skin_in_collection(bpy.types.Operator):
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
 
-            if skin_collection_from_index(self.coll_index).use_flt:
-                is_flt = coll.skis_active_skin.type != skin_collection_from_index(self.coll_index).flt_type
+            if collection_list[self.coll_index].use_flt:
+                is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
 
         unhide_objs(coll.all_objects[coll.skis_active_skin.name])
 

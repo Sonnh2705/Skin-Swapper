@@ -26,6 +26,18 @@ def unhide_objs(obj):
         obj.hide_set(state=False)
 
 
+def sort_item_in_collection(collection):
+
+    if use_skin_collection_or_active(collection) is bpy.context.view_layer.layer_collection.collection:
+        sort_coll = bpy.context.view_layer.objects.keys().copy()
+    else:
+        sort_coll = use_skin_collection_or_active(
+            collection).all_objects.keys().copy()
+    sort_coll.sort(key=str.casefold)
+
+    return sort_coll
+
+
 # OPERATOR
 
 
@@ -37,7 +49,10 @@ class SKIS_OP_add_skin_collection_to_list(bpy.types.Operator):
 
     def execute(self, context):
 
-        bpy.context.scene.skis_skin_collection_list.add()
+        scene = bpy.context.scene
+
+        scene.skis_skin_collection_list_index = len(scene.skis_skin_collection_list)
+        scene.skis_skin_collection_list.add()
 
         return {'FINISHED'}
 
@@ -50,11 +65,68 @@ class SKIS_OP_remove_skin_collection_in_list(bpy.types.Operator):
 
     def execute(self, context):
 
-        bpy.context.scene.skis_skin_collection_list.remove(
-            bpy.context.scene.skis_skin_collection_list_index
-            if bpy.context.scene.skis_skin_collection_list_index
+        scene = bpy.context.scene
+
+        scene.skis_skin_collection_list.remove(
+            scene.skis_skin_collection_list_index
+            if scene.skis_skin_collection_list_index
             else 0
         )
+        if scene.skis_skin_collection_list_index > len(scene.skis_skin_collection_list) - 1:
+            scene.skis_skin_collection_list_index = len(scene.skis_skin_collection_list) - 1
+
+        return {'FINISHED'}
+
+
+class SKIS_OP_move_skin_collection_in_list(bpy.types.Operator):
+    bl_idname = 'skis.move_skin_collection_in_list'
+    bl_label = 'Move collection'
+    bl_description = 'Move skin collection up/down in the list'
+    bl_options = {'REGISTER', 'UNDO'}
+
+    direction: bpy.props.EnumProperty(name='Move direction',
+                                      items=[
+                                           ('UP', 'Move up', 'Move collection up'),
+                                           ('DOWN', 'Move down', 'Move collection down'),
+                                           ('FIRST', 'Move to first', 'Move collection to first place'),
+                                           ('LAST', 'Move last', 'Move collection last place'),
+                                      ]
+                                      )
+
+    def execute(self, context):
+
+        scene = context.scene
+        index: int
+
+        match self.direction:
+            case 'UP':
+                index = scene.skis_skin_collection_list_index - 1
+            case 'DOWN':
+                index = scene.skis_skin_collection_list_index + 1
+            case 'FIRST':
+                index = 0
+            case 'LAST':
+                index = len(scene.skis_skin_collection_list) - 1
+
+        scene.skis_skin_collection_list.move(scene.skis_skin_collection_list_index, index)
+        scene.skis_skin_collection_list_index = index
+
+        return {'FINISHED'}
+
+
+class SKIS_OP_skin_collection_batch_setting(bpy.types.Operator):
+    bl_idname = 'skis.batch_setting_skin_collection'
+    bl_label = 'Setting for skin collection in batch'
+    bl_description = 'Change setting for skin collection in batch'
+    bl_options = {'REGISTER'}
+
+    collapse: bpy.props.BoolProperty()
+
+    def execute(self, context):
+
+        for i in range(0, len(bpy.context.scene.skis_skin_collection_list)):
+
+            bpy.context.scene.skis_skin_collection_list[i].collapse = self.collapse
 
         return {'FINISHED'}
 
@@ -63,7 +135,7 @@ class SKIS_OP_set_skin_collection(bpy.types.Operator):
     bl_idname = 'skis.set_skin_collection'
     bl_label = 'Set skin collection'
     bl_description = 'Set active collection as skin collection at index'
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     index: bpy.props.IntProperty()
 
@@ -77,7 +149,7 @@ class SKIS_OP_set_skin_collection(bpy.types.Operator):
 class SKIS_OP_to_active_skin_in_collection(bpy.types.Operator):
     bl_idname = 'skis.to_active_skin_in_collection'
     bl_label = 'To active skin in collection'
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     skin_name: bpy.props.StringProperty()
     coll_index: bpy.props.IntProperty()
@@ -95,7 +167,7 @@ class SKIS_OP_to_active_skin_in_collection(bpy.types.Operator):
 class SKIS_OP_hide_non_active_skin_in_collection(bpy.types.Operator):
     bl_idname = 'skis.hide_non_active_skin_in_collection'
     bl_label = 'Hide non active skin in collection'
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     coll_index: bpy.props.IntProperty()
 
@@ -124,22 +196,10 @@ class SKIS_OP_hide_all_non_active_skin(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def sort_item_in_collection(collection):
-
-    if use_skin_collection_or_active(collection) is bpy.context.view_layer.layer_collection.collection:
-        sort_coll = bpy.context.view_layer.objects.keys().copy()
-    else:
-        sort_coll = use_skin_collection_or_active(
-            collection).all_objects.keys().copy()
-    sort_coll.sort(key=str.casefold)
-
-    return sort_coll
-
-
 class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
     bl_idname = 'skis.to_next_skin_in_collection'
     bl_label = 'To next skin in collection'
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     coll_index: bpy.props.IntProperty()
 
@@ -190,7 +250,7 @@ class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
 class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
     bl_idname = 'skis.to_prev_skin_in_collection'
     bl_label = 'To prev skin in collection'
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     coll_index: bpy.props.IntProperty()
 
@@ -237,7 +297,7 @@ class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
 class SKIS_OP_to_first_skin_in_collection(bpy.types.Operator):
     bl_idname = 'skis.to_first_skin_in_collection'
     bl_label = 'To first skin in collection'
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     coll_index: bpy.props.IntProperty()
 
@@ -283,7 +343,7 @@ class SKIS_OP_to_first_skin_in_collection(bpy.types.Operator):
 class SKIS_OP_to_last_skin_in_collection(bpy.types.Operator):
     bl_idname = 'skis.to_last_skin_in_collection'
     bl_label = 'To last skin in collection'
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {'REGISTER'}
 
     coll_index: bpy.props.IntProperty()
 

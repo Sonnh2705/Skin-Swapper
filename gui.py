@@ -18,17 +18,9 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
 
         layout = self.layout
 
-        layout.label(text='Skin collection list:')
+        # layout.label(text='Skin collection list:')
 
         row = layout.row(align=True)
-        col = row.column(align=True)
-        col.template_list('SKIS_UL_collection_list',
-                          '1',
-                          bpy.context.scene,
-                          'skis_skin_collection_list',
-                          bpy.context.scene,
-                          'skis_skin_collection_list_index',
-                          )
 
         col = row.column(align=True)
         col.operator('skis.add_skin_collection_to_list',
@@ -41,6 +33,41 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
                      icon='REMOVE',
                      emboss=True
                      )
+
+        col = row.column(align=True)
+        col.template_list('SKIS_UL_collection_list',
+                          '1',
+                          bpy.context.scene,
+                          'skis_skin_collection_list',
+                          bpy.context.scene,
+                          'skis_skin_collection_list_index',
+                          )
+
+        col = row.column(align=True)
+        op = col.operator('skis.move_skin_collection_in_list',
+                          text='',
+                          icon='ANCHOR_TOP',
+                          emboss=True
+                          )
+        op.direction = 'FIRST'
+        op = col.operator('skis.move_skin_collection_in_list',
+                          text='',
+                          icon='TRIA_UP',
+                          emboss=True
+                          )
+        op.direction = 'UP'
+        op = col.operator('skis.move_skin_collection_in_list',
+                          text='',
+                          icon='TRIA_DOWN',
+                          emboss=True
+                          )
+        op.direction = 'DOWN'
+        op = col.operator('skis.move_skin_collection_in_list',
+                          text='',
+                          icon='ANCHOR_BOTTOM',
+                          emboss=True
+                          )
+        op.direction = 'LAST'
 
 
 class SKIS_PT_side_panel_skin_list(bpy.types.Panel):
@@ -55,10 +82,17 @@ class SKIS_PT_side_panel_skin_list(bpy.types.Panel):
 
         # hide all non active button
 
-        col = layout.column(align=True)
-        col.operator('skis.hide_all_non_active_skin', icon='GROUP_VERTEX')
-        col.scale_y = 1.5
+        row = layout.row()
+        col = row.column(align=True)
+        col.scale_y = .8
+        op = col.operator('skis.batch_setting_skin_collection', text='', icon='REMOVE')
+        op.collapse = True
+        op = col.operator('skis.batch_setting_skin_collection', text='', icon='DOWNARROW_HLT')
+        op.collapse = False
 
+        col = row.column(align=True)
+        col.operator('skis.hide_all_non_active_skin', icon='GROUP_VERTEX')
+        col.scale_y = 1.6
         # skin collections
 
         for index in range(0, len(bpy.context.scene.skis_skin_collection_list)):
@@ -76,6 +110,7 @@ def skin_list_side_panel(layout, index):
     row = layout.row(align=True)
 
     # skin collection collapse
+
     row.prop(collection_list[index],
              'collapse',
              text='',
@@ -91,14 +126,14 @@ def skin_list_side_panel(layout, index):
     row.prop(collection_list[index],
              'show',
              text='',
-             emboss=True
+             emboss=True,
              )
 
     # skin collection index
 
     box = row.box()
     box.scale_x = 0.4
-    box.scale_y = 0.6
+    box.scale_y = 0.5
     box.label(text=f'{index + 1}',)
     box.alignment = 'CENTER'
 
@@ -114,18 +149,26 @@ def skin_list_side_panel(layout, index):
 
     # skin collection prop
 
-    row.prop(collection_list[index], 'skin_coll', text='',)
+    row.prop(collection_list[index],
+             'skin_coll',
+             text='',
+             icon=('NONE'
+                   if collection_list[index].skin_coll is None or collection_list[index].skin_coll.color_tag == 'NONE'
+                   else f'COLLECTION_{collection_list[index].skin_coll.color_tag}'
+                   )
+             )
 
     # skin collection hide viewport
 
     if collection_list[index].skin_coll is not None:
-        row.prop(collection_list[index].skin_coll, 'hide_viewport', text='', emboss=False)
+        row.prop(collection_list[index].skin_coll,
+                 'hide_viewport', text='', emboss=False)
     else:
         row.label(icon='RESTRICT_VIEW_ON')
 
     # skin collection collapse
 
-    if collection_list[index].collapse:
+    if not collection_list[index].collapse:
 
         # skin collection item filter type
 
@@ -165,7 +208,8 @@ def skin_list_side_panel(layout, index):
 
         col = row.column(align=True)
         row = col.row()
-        row.enabled = use_skin_collection_or_active(index).skis_active_skin != None
+        row.enabled = use_skin_collection_or_active(
+            index).skis_active_skin != None
         op = row.operator('skis.hide_non_active_skin_in_collection',
                           text='',
                           icon='COMMUNITY',
@@ -187,7 +231,8 @@ def skin_list_side_panel(layout, index):
         # prev skin button
 
         row = col.row()
-        row.enabled = use_skin_collection_or_active(index).skis_active_skin != None
+        row.enabled = use_skin_collection_or_active(
+            index).skis_active_skin != None
         op = row.operator('skis.to_prev_skin_in_collection',
                           text='',
                           icon='TRIA_UP_BAR',
@@ -198,7 +243,8 @@ def skin_list_side_panel(layout, index):
         # next skin button
 
         row = col.row()
-        row.enabled = use_skin_collection_or_active(index).skis_active_skin != None
+        row.enabled = use_skin_collection_or_active(
+            index).skis_active_skin != None
         op = row.operator('skis.to_next_skin_in_collection',
                           text='',
                           icon='TRIA_DOWN_BAR',
@@ -220,21 +266,20 @@ class SKIS_UL_collection_list(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_property, index, flt_flag):
 
-        layout.scale_y = 1.2
-
         row = layout.row(align=True)
         row.prop(item,
                  'show',
                  text='',
                  emboss=True,
                  )
+        row.scale_x = 0.6
 
         row = layout.row()
         row.label(text=f'{index + 1}')
-        row.scale_x = .08
+        row.scale_x = .09
 
-        row = row.row()
-        row.scale_x = 1.2
+        row = layout.row(align=True)
+        row.scale_x = 1.1
         op = row.operator('skis.set_skin_collection',
                           text='',
                           icon='PINNED',
@@ -247,8 +292,12 @@ class SKIS_UL_collection_list(bpy.types.UIList):
                  'skin_coll',
                  text='',
                  emboss=True,
+                 icon=('NONE'
+                       if item.skin_coll is None or item.skin_coll.color_tag == 'NONE'
+                       else f'COLLECTION_{item.skin_coll.color_tag}'
+                       )
                  )
-        row.scale_x = 0.7
+        row.scale_x = 0.65
         row.alignment = 'LEFT'
 
         row = layout.row()
@@ -284,32 +333,6 @@ class SKIS_UL_skin_list(bpy.types.UIList):
         # item prop
 
         row = layout.row()
-        row.scale_x = .9
-        row.prop(item,
-                 'hide_viewport',
-                 text='',
-                 emboss=False
-                 )
-
-        row = layout.row()
-        row.scale_x = .8
-        row.alert = True
-        row.enabled = not item.hide_viewport
-        row.label(icon=f'OUTLINER_OB_{item.type}')
-
-        row = layout.row()
-        row.enabled = not item.hide_viewport
-        row.label(text=f'{item.name}')
-
-        box = layout.box()
-        box.enabled = not item.hide_viewport
-        box.label(text=f'{index + 1}')
-        box.scale_x = 0.08
-        box.scale_y = 0.5
-
-        # operator
-
-        row = layout.row()
         row.scale_x = .8
         row.enabled = not item.hide_viewport
         op = row.operator('skis.to_active_skin_in_collection', text='', emboss=False,
@@ -320,6 +343,32 @@ class SKIS_UL_skin_list(bpy.types.UIList):
                           )
         op.skin_name = item.name
         op.coll_index = int(self.list_id)
+
+        row = layout.row()
+        row.scale_x = .8
+        row.alert = True
+        row.enabled = not item.hide_viewport
+        row.label(icon=f'OUTLINER_OB_{item.type}')
+
+        row = layout.row()
+        row.enabled = not item.hide_viewport
+        row.prop(item, 'name', text='', emboss=False)
+
+        box = layout.box()
+        box.enabled = not item.hide_viewport
+        box.label(text=f'{index + 1}')
+        box.scale_x = 0.12
+        box.scale_y = 0.5
+
+        row = layout.row()
+        row.scale_x = .9
+        row.prop(item,
+                 'hide_viewport',
+                 text='',
+                 emboss=False
+                 )
+
+        # operator
 
     def filter_items(self, context, data, property):
 

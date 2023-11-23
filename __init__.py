@@ -15,7 +15,9 @@ import bpy
 
 from .ops import (SKIS_OP_add_skin_collection_to_list,
                   SKIS_OP_remove_skin_collection_in_list,
+                  SKIS_OP_skin_collection_batch_setting,
                   SKIS_OP_set_skin_collection,
+                  SKIS_OP_move_skin_collection_in_list,
                   SKIS_OP_to_active_skin_in_collection,
                   SKIS_OP_hide_non_active_skin_in_collection,
                   SKIS_OP_hide_all_non_active_skin,
@@ -41,25 +43,48 @@ bl_info = {
 }
 
 
+def filter_use_match_collection_color(self, context):
+
+    print(self)
+    if self.use_flt:
+        match self.flt_type:
+            case 'ARMATURE':
+                self.skin_coll.color_tag = 'COLOR_01'
+            case 'MESH':
+                self.skin_coll.color_tag = 'COLOR_05'
+            case 'CURVE':
+                self.skin_coll.color_tag = 'COLOR_06'
+    else:
+        self.skin_coll.color_tag = 'NONE'
+
+
 class SKIS_PG_skin_collection(bpy.types.PropertyGroup):
 
-    skin_coll: bpy.props.PointerProperty(name='Skin collection', type=bpy.types.Collection)
-    collapse: bpy.props.BoolProperty(name='Skin collection collapse', default=True)
+    skin_coll: bpy.props.PointerProperty(name='Skin collection',
+                                         type=bpy.types.Collection,
+                                         )
+    collapse: bpy.props.BoolProperty(name='Skin collection collapse', default=False)
     show: bpy.props.BoolProperty(name='Skin collection visible', default=True)
-    use_flt: bpy.props.BoolProperty(name='Filter item in collection', default=False)
-    flt_type: bpy.props.EnumProperty(
-        name='Filter object by type',
-        items=[('MESH', 'Skin (Mesh)', 'Filter items by mesh'),
-               ('ARMATURE', 'Skeleton (Armature)', 'Filter items by armature'),
-               ('CURVE', 'Curve', 'Filter items by curve')
-               ]
-    )
+    use_flt: bpy.props.BoolProperty(name='Filter item in collection',
+                                    default=False,
+                                    update=filter_use_match_collection_color
+                                    )
+    flt_type: bpy.props.EnumProperty(name='Filter object by type',
+                                     items=[
+                                         ('MESH', 'Skin (Mesh)', 'Filter items by mesh'),
+                                         ('ARMATURE', 'Skeleton (Armature)', 'Filter items by armature'),
+                                         ('CURVE', 'Curve', 'Filter items by curve')
+                                     ],
+                                     update=filter_use_match_collection_color,
+                                     )
 
 
 classes = (SKIS_PG_skin_collection,
            SKIS_OP_add_skin_collection_to_list,
            SKIS_OP_remove_skin_collection_in_list,
            SKIS_OP_set_skin_collection,
+           SKIS_OP_skin_collection_batch_setting,
+           SKIS_OP_move_skin_collection_in_list,
            SKIS_OP_to_active_skin_in_collection,
            SKIS_OP_hide_non_active_skin_in_collection,
            SKIS_OP_hide_all_non_active_skin,

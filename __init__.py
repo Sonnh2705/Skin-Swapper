@@ -45,7 +45,6 @@ bl_info = {
 
 def filter_use_match_collection_color(self, context):
 
-    print(self)
     if self.use_flt:
         match self.flt_type:
             case 'ARMATURE':

@@ -278,14 +278,14 @@ class SKIS_UL_collection_list(bpy.types.UIList):
         row.label(text=f'{index + 1}')
         row.scale_x = .09
 
-        row = layout.row(align=True)
-        row.scale_x = 1.1
-        op = row.operator('skis.set_skin_collection',
-                          text='',
-                          icon='PINNED',
-                          emboss=True,
-                          )
-        op.index = index
+        # row = layout.row(align=True)
+        # row.scale_x = 1.1
+        # op = row.operator('skis.set_skin_collection',
+        #                   text='',
+        #                   icon='PINNED',
+        #                   emboss=True,
+        #                   )
+        # op.index = index
 
         row = layout.row()
         row.prop(item,

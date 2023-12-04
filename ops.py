@@ -26,19 +26,58 @@ def unhide_objs(obj):
         obj.hide_set(state=False)
 
 
-def sort_item_in_collection(collection):
+def sort_item_in_collection(index):
 
-    if use_skin_collection_or_active(collection) is bpy.context.view_layer.layer_collection.collection:
+    if use_skin_collection_or_active(index) is bpy.context.view_layer.layer_collection.collection:
         sort_coll = bpy.context.view_layer.objects.keys().copy()
     else:
-        sort_coll = use_skin_collection_or_active(
-            collection).all_objects.keys().copy()
+        sort_coll = use_skin_collection_or_active(index).all_objects.keys().copy()
     sort_coll.sort(key=str.casefold)
 
     return sort_coll
 
 
 # OPERATOR
+
+
+class SKIS_OP_to_outliner(bpy.types.Operator):
+    bl_idname = 'skis.to_outliner'
+    bl_label = 'Jump to object in outliner'
+    bl_description = 'Jump to the object in outliner'
+    bl_options = {'REGISTER'}
+
+    skin_name: bpy.props.StringProperty()
+    coll_index: bpy.props.IntProperty()
+    type: bpy.props.EnumProperty(name='Type',
+                                      items=[
+                                          ('OBJECT', 'Object', 'To object'),
+                                          ('COLLECTION', 'Collection', 'To collection'),
+                                      ]
+                                 )
+
+    def execute(self, context):
+
+        areas = [i for i in bpy.context.screen.areas if i.type == 'OUTLINER']
+        area = [a for a in areas if a.spaces[0].display_mode == 'VIEW_LAYER'][0]
+        region = [j for j in area.regions if j.type == 'WINDOW'][0]
+
+        with bpy.context.temp_override(area=area, region=region):
+
+            for obj in bpy.context.selected_objects:
+                obj.select_set(False)
+            if self.type == 'OBJECT':
+                bpy.context.view_layer.objects.active = bpy.data.objects[self.skin_name]
+                bpy.data.objects[self.skin_name].select_set(True)
+            elif self.type == 'COLLECTION':
+                bpy.context.view_layer.objects.active = bpy.data.objects[
+                    sort_item_in_collection(
+                        bpy.context.scene.skis_skin_collection_list_index
+                    )[0]
+                ]
+            bpy.ops.outliner.show_hierarchy()
+            bpy.ops.outliner.show_active()
+
+        return {'FINISHED'}
 
 
 class SKIS_OP_add_skin_collection_to_list(bpy.types.Operator):
@@ -156,10 +195,13 @@ class SKIS_OP_to_active_skin_in_collection(bpy.types.Operator):
 
     def execute(self, context):
 
-        hide_objs_in_coll(use_skin_collection_or_active(self.coll_index))
-        use_skin_collection_or_active(
-            self.coll_index).skis_active_skin = bpy.data.objects[self.skin_name]
+        coll = use_skin_collection_or_active(self.coll_index)
+
+        hide_objs_in_coll(coll)
+        coll.skis_active_skin = bpy.data.objects[self.skin_name]
         unhide_objs(bpy.data.objects[self.skin_name])
+
+        coll.skis_list_index = coll.all_objects.keys().index(self.skin_name)
 
         return {'FINISHED'}
 
@@ -173,9 +215,12 @@ class SKIS_OP_hide_non_active_skin_in_collection(bpy.types.Operator):
 
     def execute(self, context):
 
-        hide_objs_in_coll(use_skin_collection_or_active(self.coll_index))
-        unhide_objs(use_skin_collection_or_active(
-            self.coll_index).skis_active_skin)
+        coll = use_skin_collection_or_active(self.coll_index)
+
+        hide_objs_in_coll(coll)
+        unhide_objs(coll.skis_active_skin)
+
+        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
 
         return {'FINISHED'}
 
@@ -190,8 +235,7 @@ class SKIS_OP_hide_all_non_active_skin(bpy.types.Operator):
 
         for index in range(0, len(bpy.context.scene.skis_skin_collection_list)):
             if bpy.context.scene.skis_skin_collection_list[index].show:
-                unhide_objs(use_skin_collection_or_active(
-                    index).skis_active_skin)
+                unhide_objs(use_skin_collection_or_active(index).skis_active_skin)
 
         return {'FINISHED'}
 
@@ -244,6 +288,8 @@ class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
 
         unhide_objs(coll.all_objects[coll.skis_active_skin.name])
 
+        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
+
         return {'FINISHED'}
 
 
@@ -291,6 +337,8 @@ class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
 
         unhide_objs(coll.all_objects[coll.skis_active_skin.name])
 
+        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
+
         return {'FINISHED'}
 
 
@@ -337,6 +385,8 @@ class SKIS_OP_to_first_skin_in_collection(bpy.types.Operator):
 
         unhide_objs(coll.all_objects[coll.skis_active_skin.name])
 
+        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
+
         return {'FINISHED'}
 
 
@@ -382,5 +432,7 @@ class SKIS_OP_to_last_skin_in_collection(bpy.types.Operator):
                 is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
 
         unhide_objs(coll.all_objects[coll.skis_active_skin.name])
+
+        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
 
         return {'FINISHED'}

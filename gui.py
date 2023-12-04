@@ -34,6 +34,14 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
                      emboss=True
                      )
 
+        col.separator()
+        op = col.operator('skis.to_outliner',
+                          text='',
+                          icon='RESTRICT_SELECT_OFF',
+                          emboss=True
+                          )
+        op.type = 'COLLECTION'
+
         col = row.column(align=True)
         col.template_list('SKIS_UL_collection_list',
                           '1',
@@ -114,9 +122,9 @@ def skin_list_side_panel(layout, index):
     row.prop(collection_list[index],
              'collapse',
              text='',
-             icon=('DOWNARROW_HLT'
+             icon=('RIGHTARROW'
                    if collection_list[index].collapse
-                   else 'RIGHTARROW'
+                   else 'DOWNARROW_HLT'
                    ),
              emboss=False,
              )
@@ -166,24 +174,39 @@ def skin_list_side_panel(layout, index):
     else:
         row.label(icon='RESTRICT_VIEW_ON')
 
-    # skin collection collapse
+    # under collapse line
 
-    if not collection_list[index].collapse:
+    if not collection_list[index].collapse and not collection_list[index].skin_coll.hide_viewport:
 
-        # skin collection item filter type
+        # get filtered skins
+
+        if collection_list[index].use_flt:
+            filtered_obj = [
+                x for x in collection_list[index].skin_coll.all_objects if x.type == collection_list[index].flt_type
+            ]
+        else:
+            filtered_obj = [
+                x for x in collection_list[index].skin_coll.all_objects
+            ]
 
         row = layout.row(align=True)
 
-        # box = row.box()
-        # box.label(text=f'{len(collection_list[index].skin_coll.all_objects)} skins')
-        # box.scale_y = 0.6
+        # skin count
 
-        row.prop(collection_list[index],
-                 'use_flt',
-                 text='Filter',
-                 toggle=True,
-                 icon='FILTER',
-                 )
+        box = row.box()
+        box.label(text=f'{len(filtered_obj)} skins')
+        box.scale_y = 0.6
+        box.scale_x = 0.7
+
+        # skin collection item filter type
+        row2 = row.row()
+        row2.prop(collection_list[index],
+                  'use_flt',
+                  text='Filter',
+                  toggle=True,
+                  icon='FILTER',
+                  )
+        row2.scale_x = 0.6
 
         col = row.column()
         col.prop(collection_list[index],
@@ -335,8 +358,10 @@ class SKIS_UL_skin_list(bpy.types.UIList):
         row = layout.row()
         row.scale_x = .8
         row.enabled = not item.hide_viewport
-        op = row.operator('skis.to_active_skin_in_collection', text='', emboss=False,
-                          icon=('OUTLINER_OB_ARMATURE'
+        op = row.operator('skis.to_active_skin_in_collection',
+                          text='',
+                          emboss=False,
+                          icon=('SURFACE_NCIRCLE'
                                 if item == use_skin_collection_or_active(int(self.list_id)).skis_active_skin else
                                 'DOT'
                                 )
@@ -345,14 +370,23 @@ class SKIS_UL_skin_list(bpy.types.UIList):
         op.coll_index = int(self.list_id)
 
         row = layout.row()
-        row.scale_x = .8
-        row.alert = True
+        # row.scale_x = .8
+        # row.alert = True
         row.enabled = not item.hide_viewport
-        row.label(icon=f'OUTLINER_OB_{item.type}')
+        # row.label(icon=f'OUTLINER_OB_{item.type}')
+        op = row.operator('skis.to_outliner',
+                          text='',
+                          emboss=True,
+                          depress=False,
+                          icon=f'OUTLINER_OB_{item.type}',
+                          )
+        op.skin_name = item.name
+        op.coll_index = int(self.list_id)
+        op.type = 'OBJECT'
 
         row = layout.row()
         row.enabled = not item.hide_viewport
-        row.prop(item, 'name', text='', emboss=False)
+        row.prop(item, 'name', text='', emboss=False,)
 
         box = layout.box()
         box.enabled = not item.hide_viewport

@@ -13,7 +13,8 @@
 
 import bpy
 
-from .ops import (SKIS_OP_add_skin_collection_to_list,
+from .ops import (SKIS_OP_to_outliner,
+                  SKIS_OP_add_skin_collection_to_list,
                   SKIS_OP_remove_skin_collection_in_list,
                   SKIS_OP_skin_collection_batch_setting,
                   SKIS_OP_set_skin_collection,
@@ -79,6 +80,7 @@ class SKIS_PG_skin_collection(bpy.types.PropertyGroup):
 
 
 classes = (SKIS_PG_skin_collection,
+           SKIS_OP_to_outliner,
            SKIS_OP_add_skin_collection_to_list,
            SKIS_OP_remove_skin_collection_in_list,
            SKIS_OP_set_skin_collection,

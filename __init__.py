@@ -119,6 +119,9 @@ def register():
     bpy.types.Collection.skis_active_skin = bpy.props.PointerProperty(
         type=bpy.types.Object
     )
+    bpy.types.Object.skis_hide_exclude = bpy.props.BoolProperty(
+        default=False,
+    )
 
 
 def unregister():

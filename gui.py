@@ -22,6 +22,8 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
 
         row = layout.row(align=True)
 
+        # left panel operator, add, remove
+
         col = row.column(align=True)
         col.operator('skis.add_skin_collection_to_list',
                      text='',
@@ -34,13 +36,7 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
                      emboss=True
                      )
 
-        col.separator()
-        op = col.operator('skis.to_outliner',
-                          text='',
-                          icon='RESTRICT_SELECT_OFF',
-                          emboss=True
-                          )
-        op.type = 'COLLECTION'
+        # skin collection list
 
         col = row.column(align=True)
         col.template_list('SKIS_UL_collection_list',
@@ -50,6 +46,8 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
                           bpy.context.scene,
                           'skis_skin_collection_list_index',
                           )
+
+        # right panel navigation operator
 
         col = row.column(align=True)
         op = col.operator('skis.move_skin_collection_in_list',
@@ -148,12 +146,19 @@ def skin_list_side_panel(layout, index):
     # set collection button
 
     col = row.column()
-    col.scale_x = 0.7
     op = col.operator('skis.set_skin_collection',
                       text='Set',
                       icon='PINNED'
                       )
+    col.scale_x = 0.5
     op.index = index
+
+    op2 = row.operator('skis.to_outliner',
+                       text='',
+                       icon='ZOOM_SELECTED'
+                       )
+    op2.type = 'COLLECTION'
+    op2.coll_index = index
 
     # skin collection prop
 
@@ -289,6 +294,8 @@ class SKIS_UL_collection_list(bpy.types.UIList):
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_property, index, flt_flag):
 
+        # show property
+
         row = layout.row(align=True)
         row.prop(item,
                  'show',
@@ -297,9 +304,22 @@ class SKIS_UL_collection_list(bpy.types.UIList):
                  )
         row.scale_x = 0.6
 
+        # index property
+
         row = layout.row()
         row.label(text=f'{index + 1}')
         row.scale_x = .09
+
+        row = layout.row()
+        op = row.operator('skis.to_outliner',
+                          text='',
+                          icon='ZOOM_SELECTED',
+                          emboss=True
+                          )
+        op.type = 'COLLECTION'
+        op.coll_index = index
+
+        # set active collection operator
 
         # row = layout.row(align=True)
         # row.scale_x = 1.1
@@ -309,6 +329,8 @@ class SKIS_UL_collection_list(bpy.types.UIList):
         #                   emboss=True,
         #                   )
         # op.index = index
+
+        # skin collection property
 
         row = layout.row()
         row.prop(item,
@@ -322,6 +344,8 @@ class SKIS_UL_collection_list(bpy.types.UIList):
                  )
         row.scale_x = 0.65
         row.alignment = 'LEFT'
+
+        # hide viewport property
 
         row = layout.row()
         if item.skin_coll is not None:
@@ -361,9 +385,9 @@ class SKIS_UL_skin_list(bpy.types.UIList):
         op = row.operator('skis.to_active_skin_in_collection',
                           text='',
                           emboss=False,
-                          icon=('SURFACE_NCIRCLE'
+                          icon=('GHOST_ENABLED'
                                 if item == use_skin_collection_or_active(int(self.list_id)).skis_active_skin else
-                                'DOT'
+                                'GHOST_DISABLED'
                                 )
                           )
         op.skin_name = item.name
@@ -371,13 +395,12 @@ class SKIS_UL_skin_list(bpy.types.UIList):
 
         row = layout.row()
         # row.scale_x = .8
-        # row.alert = True
+        row.alert = True
         row.enabled = not item.hide_viewport
         # row.label(icon=f'OUTLINER_OB_{item.type}')
         op = row.operator('skis.to_outliner',
                           text='',
                           emboss=True,
-                          depress=False,
                           icon=f'OUTLINER_OB_{item.type}',
                           )
         op.skin_name = item.name
@@ -396,6 +419,15 @@ class SKIS_UL_skin_list(bpy.types.UIList):
 
         row = layout.row()
         row.scale_x = .9
+        row.prop(item,
+                 'skis_hide_exclude',
+                 text='',
+                 icon=('FAKE_USER_ON'
+                       if item.skis_hide_exclude == True
+                       else 'FAKE_USER_OFF'
+                       ),
+                 emboss=False,
+                 )
         row.prop(item,
                  'hide_viewport',
                  text='',

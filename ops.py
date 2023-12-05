@@ -15,9 +15,9 @@ def use_skin_collection_or_active(index=0):
 
 def hide_objs_in_coll(collection):
 
-    for obj in collection.all_objects.keys():
-        if collection.all_objects[obj].visible_get():
-            collection.all_objects[obj].hide_set(state=True)
+    for obj in collection.all_objects:
+        if obj.visible_get() and not obj.skis_hide_exclude:
+            obj.hide_set(state=True)
 
 
 def unhide_objs(obj):
@@ -65,15 +65,16 @@ class SKIS_OP_to_outliner(bpy.types.Operator):
 
             for obj in bpy.context.selected_objects:
                 obj.select_set(False)
+
             if self.type == 'OBJECT':
-                bpy.context.view_layer.objects.active = bpy.data.objects[self.skin_name]
+                obj = bpy.data.objects[self.skin_name]
+                # bpy.context.view_layer.objects.active = obj
                 bpy.data.objects[self.skin_name].select_set(True)
+
             elif self.type == 'COLLECTION':
-                bpy.context.view_layer.objects.active = bpy.data.objects[
-                    sort_item_in_collection(
-                        bpy.context.scene.skis_skin_collection_list_index
-                    )[0]
-                ]
+                obj = bpy.data.objects[sort_item_in_collection(self.coll_index)[0]]
+
+            bpy.context.view_layer.objects.active = obj
             bpy.ops.outliner.show_hierarchy()
             bpy.ops.outliner.show_active()
 
@@ -264,15 +265,17 @@ class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
 
         hide_objs_in_coll(coll)
 
-        # skip hide viewport and filtered items
+        # skip hide viewport, hide exclude and filtered items
 
         is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
         is_hide_viewport = coll.skis_active_skin.hide_viewport
+        # is_exclude = coll.skis_active_skin.skis_hide_exclude
 
         if not collection_list[self.coll_index].use_flt:
             is_flt = False
 
         while is_hide_viewport or is_flt:
+            # while is_hide_viewport or is_flt or is_exclude:
 
             index = sort_coll.index(coll.skis_active_skin.name)
             next_index = index + 1
@@ -282,6 +285,7 @@ class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
             coll.skis_active_skin = coll.all_objects[sort_coll[next_index]]
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
+            # is_exclude = coll.skis_active_skin.skis_hide_exclude
 
             if collection_list[self.coll_index].use_flt:
                 is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
@@ -315,15 +319,17 @@ class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
 
         hide_objs_in_coll(coll)
 
-        # skip hide viewport and filtered items
+        # skip hide viewport, hide exclude and filtered items
 
         is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
         is_hide_viewport = coll.skis_active_skin.hide_viewport
+        # is_exclude = coll.skis_active_skin.skis_hide_exclude
 
         if not collection_list[self.coll_index].use_flt:
             is_flt = False
 
         while is_hide_viewport or is_flt:
+            # while is_hide_viewport or is_flt or is_exclude:
 
             index = sort_coll.index(coll.skis_active_skin.name)
             prev_index = index - 1
@@ -331,6 +337,7 @@ class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
             coll.skis_active_skin = coll.all_objects[sort_coll[prev_index]]
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
+            # is_exclude = coll.skis_active_skin.skis_hide_exclude
 
             if collection_list[self.coll_index].use_flt:
                 is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type

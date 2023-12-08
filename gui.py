@@ -249,45 +249,47 @@ def skin_list_side_panel(layout, index):
 
         col.separator()
 
-        op = col.operator('skis.to_first_skin_in_collection',
+        op = col.operator('skis.skin_jump_in_collection',
                           text='',
                           icon='ANCHOR_TOP',
                           emboss=True
                           )
         op.coll_index = index
+        op.options = 'FIRST'
 
         # prev skin button
 
         row = col.row()
-        row.enabled = use_skin_collection_or_active(
-            index).skis_active_skin != None
-        op = row.operator('skis.to_prev_skin_in_collection',
+        row.enabled = use_skin_collection_or_active(index).skis_active_skin != None
+        op = row.operator('skis.skin_jump_in_collection',
                           text='',
                           icon='TRIA_UP_BAR',
                           emboss=True
                           )
         op.coll_index = index
+        op.options = 'PREV'
 
         # next skin button
 
         row = col.row()
-        row.enabled = use_skin_collection_or_active(
-            index).skis_active_skin != None
-        op = row.operator('skis.to_next_skin_in_collection',
+        row.enabled = use_skin_collection_or_active(index).skis_active_skin != None
+        op = row.operator('skis.skin_jump_in_collection',
                           text='',
                           icon='TRIA_DOWN_BAR',
                           emboss=True,
                           )
         op.coll_index = index
+        op.options = 'NEXT'
 
-        # last skin button button
+        # last skin button
 
-        op = col.operator('skis.to_last_skin_in_collection',
+        op = col.operator('skis.skin_jump_in_collection',
                           text='',
                           icon='ANCHOR_BOTTOM',
                           emboss=True
                           )
         op.coll_index = index
+        op.options = 'LAST'
 
 
 class SKIS_UL_collection_list(bpy.types.UIList):

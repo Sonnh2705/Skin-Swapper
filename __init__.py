@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from bpy.app.handlers import persistent
 import bpy
 
 from .ops import (SKIS_OP_to_outliner,
@@ -22,10 +23,7 @@ from .ops import (SKIS_OP_to_outliner,
                   SKIS_OP_to_active_skin_in_collection,
                   SKIS_OP_hide_non_active_skin_in_collection,
                   SKIS_OP_hide_all_non_active_skin,
-                  SKIS_OP_to_next_skin_in_collection,
-                  SKIS_OP_to_prev_skin_in_collection,
-                  SKIS_OP_to_first_skin_in_collection,
-                  SKIS_OP_to_last_skin_in_collection,
+                  SKIS_OP_skin_jump_in_collection,
                   )
 from .gui import (SKIS_PT_side_panel_collection_list,
                   SKIS_PT_side_panel_skin_list,
@@ -89,16 +87,20 @@ classes = (SKIS_PG_skin_collection,
            SKIS_OP_to_active_skin_in_collection,
            SKIS_OP_hide_non_active_skin_in_collection,
            SKIS_OP_hide_all_non_active_skin,
-           SKIS_OP_to_next_skin_in_collection,
-           SKIS_OP_to_prev_skin_in_collection,
-           SKIS_OP_to_first_skin_in_collection,
-           SKIS_OP_to_last_skin_in_collection,
+           SKIS_OP_skin_jump_in_collection,
            SKIS_PT_side_panel_collection_list,
            SKIS_PT_side_panel_skin_list,
            SKIS_UL_skin_list,
            SKIS_UL_collection_list,
            SKIS_preferences,
            )
+
+
+@persistent
+def load_handler(dummy):
+
+    if len(bpy.context.scene.skis_skin_collection_list) < 1:
+        bpy.context.scene.skis_skin_collection_list.add()
 
 
 def register():
@@ -123,6 +125,8 @@ def register():
         default=False,
     )
 
+    bpy.app.handlers.load_post.append(load_handler)
+
 
 def unregister():
 
@@ -134,3 +138,4 @@ def unregister():
     del bpy.types.Scene.skis_skin_collection_list_index
     del bpy.types.Collection.skis_list_index
     del bpy.types.Collection.skis_active_skin
+    del bpy.types.Object.skis_hide_exclude

@@ -1,4 +1,6 @@
+import typing
 import bpy
+from bpy.types import Context, Event
 
 from .pref import prefs
 
@@ -241,29 +243,47 @@ class SKIS_OP_hide_all_non_active_skin(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
-    bl_idname = 'skis.to_next_skin_in_collection'
+class SKIS_OP_skin_jump_in_collection(bpy.types.Operator):
+    bl_idname = 'skis.skin_jump_in_collection'
     bl_label = 'To next skin in collection'
     bl_options = {'REGISTER'}
 
     coll_index: bpy.props.IntProperty()
+    options: bpy.props.EnumProperty(name='Jump options',
+                                    items=[
+                                        ('NEXT', 'Jump next', 'Jump to next skin'),
+                                        ('PREV', 'Jump previous', 'Jump to previous skin'),
+                                        ('FIRST', 'Jump first', 'Jump to first skin'),
+                                        ('LAST', 'Jump last', 'Jump to last skin'),
+                                    ]
+                                    )
 
     def execute(self, context):
-
-        # get next index
 
         coll = use_skin_collection_or_active(self.coll_index)
         sort_coll = sort_item_in_collection(self.coll_index)
         collection_list = bpy.context.scene.skis_skin_collection_list
 
-        index = sort_coll.index(coll.skis_active_skin.name)
-        next_index = index + 1
-        if next_index == len(sort_coll):
-            next_index = 0
-
-        coll.skis_active_skin = coll.all_objects[sort_coll[next_index]]
-
         hide_objs_in_coll(coll)
+
+        # get index
+
+        index = sort_coll.index(coll.skis_active_skin.name)
+
+        match self.options:
+
+            case 'NEXT':
+                new_index = index + 1
+                if new_index == len(sort_coll):
+                    new_index = 0
+            case 'PREV':
+                new_index = index - 1
+            case 'FIRST':
+                new_index = 0
+            case 'LAST':
+                new_index = len(sort_coll) - 1
+
+        coll.skis_active_skin = coll.all_objects[sort_coll[new_index]]
 
         # skip hide viewport, hide exclude and filtered items
 
@@ -278,162 +298,23 @@ class SKIS_OP_to_next_skin_in_collection(bpy.types.Operator):
             # while is_hide_viewport or is_flt or is_exclude:
 
             index = sort_coll.index(coll.skis_active_skin.name)
-            next_index = index + 1
-            if next_index == len(sort_coll):
-                next_index = 0
 
-            coll.skis_active_skin = coll.all_objects[sort_coll[next_index]]
+            match self.options:
+                case 'NEXT':
+                    new_index = index + 1
+                    if new_index == len(sort_coll):
+                        new_index = 0
+                case 'PREV':
+                    new_index = index - 1
+                case 'FIRST':
+                    new_index = index + 1
+                case 'LAST':
+                    new_index = index - 1
 
-            is_hide_viewport = coll.skis_active_skin.hide_viewport
-            # is_exclude = coll.skis_active_skin.skis_hide_exclude
-
-            if collection_list[self.coll_index].use_flt:
-                is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
-
-        unhide_objs(coll.all_objects[coll.skis_active_skin.name])
-
-        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
-
-        return {'FINISHED'}
-
-
-class SKIS_OP_to_prev_skin_in_collection(bpy.types.Operator):
-    bl_idname = 'skis.to_prev_skin_in_collection'
-    bl_label = 'To prev skin in collection'
-    bl_options = {'REGISTER'}
-
-    coll_index: bpy.props.IntProperty()
-
-    def execute(self, context):
-
-        # get prev index
-
-        coll = use_skin_collection_or_active(self.coll_index)
-        sort_coll = sort_item_in_collection(self.coll_index)
-        collection_list = bpy.context.scene.skis_skin_collection_list
-
-        index = sort_coll.index(coll.skis_active_skin.name)
-        prev_index = index - 1
-
-        coll.skis_active_skin = coll.all_objects[sort_coll[prev_index]]
-
-        hide_objs_in_coll(coll)
-
-        # skip hide viewport, hide exclude and filtered items
-
-        is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
-        is_hide_viewport = coll.skis_active_skin.hide_viewport
-        # is_exclude = coll.skis_active_skin.skis_hide_exclude
-
-        if not collection_list[self.coll_index].use_flt:
-            is_flt = False
-
-        while is_hide_viewport or is_flt:
-            # while is_hide_viewport or is_flt or is_exclude:
-
-            index = sort_coll.index(coll.skis_active_skin.name)
-            prev_index = index - 1
-
-            coll.skis_active_skin = coll.all_objects[sort_coll[prev_index]]
+            coll.skis_active_skin = coll.all_objects[sort_coll[new_index]]
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
             # is_exclude = coll.skis_active_skin.skis_hide_exclude
-
-            if collection_list[self.coll_index].use_flt:
-                is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
-
-        unhide_objs(coll.all_objects[coll.skis_active_skin.name])
-
-        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
-
-        return {'FINISHED'}
-
-
-class SKIS_OP_to_first_skin_in_collection(bpy.types.Operator):
-    bl_idname = 'skis.to_first_skin_in_collection'
-    bl_label = 'To first skin in collection'
-    bl_options = {'REGISTER'}
-
-    coll_index: bpy.props.IntProperty()
-
-    def execute(self, context):
-
-        # get first index
-
-        coll = use_skin_collection_or_active(self.coll_index)
-        sort_coll = sort_item_in_collection(self.coll_index)
-        collection_list = bpy.context.scene.skis_skin_collection_list
-
-        first_index = 0
-
-        coll.skis_active_skin = coll.all_objects[sort_coll[first_index]]
-
-        hide_objs_in_coll(coll)
-
-        # skip hide viewport and filtered items
-
-        is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
-        is_hide_viewport = coll.skis_active_skin.hide_viewport
-
-        if not collection_list[self.coll_index].use_flt:
-            is_flt = False
-
-        while is_hide_viewport or is_flt:
-
-            index = sort_coll.index(coll.skis_active_skin.name)
-            first_index = index + 1
-
-            coll.skis_active_skin = coll.all_objects[sort_coll[first_index]]
-
-            is_hide_viewport = coll.skis_active_skin.hide_viewport
-
-            if collection_list[self.coll_index].use_flt:
-                is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
-
-        unhide_objs(coll.all_objects[coll.skis_active_skin.name])
-
-        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
-
-        return {'FINISHED'}
-
-
-class SKIS_OP_to_last_skin_in_collection(bpy.types.Operator):
-    bl_idname = 'skis.to_last_skin_in_collection'
-    bl_label = 'To last skin in collection'
-    bl_options = {'REGISTER'}
-
-    coll_index: bpy.props.IntProperty()
-
-    def execute(self, context):
-
-        # get last index
-
-        coll = use_skin_collection_or_active(self.coll_index)
-        sort_coll = sort_item_in_collection(self.coll_index)
-        collection_list = bpy.context.scene.skis_skin_collection_list
-
-        last_index = len(sort_coll) - 1
-
-        coll.skis_active_skin = coll.all_objects[sort_coll[last_index]]
-
-        hide_objs_in_coll(coll)
-
-        # skip hide viewport and filtered items
-
-        is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
-        is_hide_viewport = coll.skis_active_skin.hide_viewport
-
-        if not collection_list[self.coll_index].use_flt:
-            is_flt = False
-
-        while is_hide_viewport or is_flt:
-
-            index = sort_coll.index(coll.skis_active_skin.name)
-            last_index = index - 1
-
-            coll.skis_active_skin = coll.all_objects[sort_coll[last_index]]
-
-            is_hide_viewport = coll.skis_active_skin.hide_viewport
 
             if collection_list[self.coll_index].use_flt:
                 is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type

@@ -101,7 +101,7 @@ class SKIS_PT_side_panel_skin_list(bpy.types.Panel):
         col.scale_y = 1.6
         # skin collections
 
-        for index in range(0, len(bpy.context.scene.skis_skin_collection_list)):
+        for index in range(len(bpy.context.scene.skis_skin_collection_list)):
             if bpy.context.scene.skis_skin_collection_list[index].show:
                 skin_list_side_panel(layout, index)
 
@@ -444,6 +444,16 @@ class SKIS_UL_skin_list(bpy.types.UIList):
         collection_list = bpy.context.scene.skis_skin_collection_list
 
         flt_item = []
+
+        if self.filter_name:
+            flt_item = bpy.types.UI_UL_list.filter_items_by_name(
+                self.filter_name,
+                self.bitflag_filter_item,
+                item,
+                'name',
+                reverse=self.use_filter_sort_reverse
+            )
+
         use_filter = collection_list[int(self.list_id)].use_flt
         obj_type = collection_list[int(self.list_id)].flt_type
 

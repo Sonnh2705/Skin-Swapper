@@ -15,10 +15,13 @@ def use_skin_collection_or_active(index=0):
         return bpy.context.scene.skis_skin_collection_list[index].skin_coll
 
 
-def hide_objs_in_coll(collection):
+def hide_objs_in_coll(collection, force_hide=False):
 
     for obj in collection.all_objects:
-        if obj.visible_get() and not obj.skis_hide_exclude:
+        if force_hide:
+            if obj.visible_get():
+                obj.hide_set(state=True)
+        elif obj.visible_get() and not obj.skis_hide_exclude:
             obj.hide_set(state=True)
 
 
@@ -46,16 +49,16 @@ class SKIS_OP_to_outliner(bpy.types.Operator):
     bl_idname = 'skis.to_outliner'
     bl_label = 'Jump to object in outliner'
     bl_description = 'Jump to the object in outliner'
-    bl_options = {'REGISTER'}
 
     skin_name: bpy.props.StringProperty()
     coll_index: bpy.props.IntProperty()
-    type: bpy.props.EnumProperty(name='Type',
-                                      items=[
-                                          ('OBJECT', 'Object', 'To object'),
-                                          ('COLLECTION', 'Collection', 'To collection'),
-                                      ]
-                                 )
+    type: bpy.props.EnumProperty(
+        name='Type',
+        items=[
+            ('OBJECT', 'Object', 'To object'),
+            ('COLLECTION', 'Collection', 'To collection'),
+        ]
+    )
 
     def execute(self, context):
 
@@ -87,7 +90,6 @@ class SKIS_OP_add_skin_collection_to_list(bpy.types.Operator):
     bl_idname = 'skis.add_skin_collection_to_list'
     bl_label = 'Add skin collection to list'
     bl_description = 'Add a new skin collection to list'
-    bl_options = {'REGISTER'}
 
     def execute(self, context):
 
@@ -103,7 +105,6 @@ class SKIS_OP_remove_skin_collection_in_list(bpy.types.Operator):
     bl_idname = 'skis.remove_skin_collection_in_list'
     bl_label = 'Remove skin collection in list'
     bl_description = 'Remove a skin collection in list'
-    bl_options = {'REGISTER'}
 
     def execute(self, context):
 
@@ -114,9 +115,10 @@ class SKIS_OP_remove_skin_collection_in_list(bpy.types.Operator):
             if scene.skis_skin_collection_list_index
             else 0
         )
-        if scene.skis_skin_collection_list_index > len(scene.skis_skin_collection_list) - 1:
-            scene.skis_skin_collection_list_index = len(scene.skis_skin_collection_list) - 1
-
+        scene.skis_skin_collection_list_index = min(
+            scene.skis_skin_collection_list_index,
+            len(scene.skis_skin_collection_list) - 1,
+        )
         return {'FINISHED'}
 
 
@@ -124,16 +126,16 @@ class SKIS_OP_move_skin_collection_in_list(bpy.types.Operator):
     bl_idname = 'skis.move_skin_collection_in_list'
     bl_label = 'Move collection'
     bl_description = 'Move skin collection up/down in the list'
-    bl_options = {'REGISTER', 'UNDO'}
 
-    direction: bpy.props.EnumProperty(name='Move direction',
-                                      items=[
-                                           ('UP', 'Move up', 'Move collection up'),
-                                           ('DOWN', 'Move down', 'Move collection down'),
-                                           ('FIRST', 'Move to first', 'Move collection to first place'),
-                                           ('LAST', 'Move last', 'Move collection last place'),
-                                      ]
-                                      )
+    direction: bpy.props.EnumProperty(
+        name='Move direction',
+        items=[
+            ('UP', 'Move up', 'Move collection up'),
+            ('DOWN', 'Move down', 'Move collection down'),
+            ('FIRST', 'Move to first', 'Move collection to first place'),
+            ('LAST', 'Move last', 'Move collection last place'),
+        ]
+    )
 
     def execute(self, context):
 
@@ -160,13 +162,12 @@ class SKIS_OP_skin_collection_batch_setting(bpy.types.Operator):
     bl_idname = 'skis.batch_setting_skin_collection'
     bl_label = 'Setting for skin collection in batch'
     bl_description = 'Change setting for skin collection in batch'
-    bl_options = {'REGISTER'}
 
     collapse: bpy.props.BoolProperty()
 
     def execute(self, context):
 
-        for i in range(0, len(bpy.context.scene.skis_skin_collection_list)):
+        for i in range(len(bpy.context.scene.skis_skin_collection_list)):
 
             bpy.context.scene.skis_skin_collection_list[i].collapse = self.collapse
 
@@ -177,7 +178,6 @@ class SKIS_OP_set_skin_collection(bpy.types.Operator):
     bl_idname = 'skis.set_skin_collection'
     bl_label = 'Set skin collection'
     bl_description = 'Set active collection as skin collection at index'
-    bl_options = {'REGISTER'}
 
     index: bpy.props.IntProperty()
 
@@ -191,7 +191,6 @@ class SKIS_OP_set_skin_collection(bpy.types.Operator):
 class SKIS_OP_to_active_skin_in_collection(bpy.types.Operator):
     bl_idname = 'skis.to_active_skin_in_collection'
     bl_label = 'To active skin in collection'
-    bl_options = {'REGISTER'}
 
     skin_name: bpy.props.StringProperty()
     coll_index: bpy.props.IntProperty()
@@ -212,7 +211,6 @@ class SKIS_OP_to_active_skin_in_collection(bpy.types.Operator):
 class SKIS_OP_hide_non_active_skin_in_collection(bpy.types.Operator):
     bl_idname = 'skis.hide_non_active_skin_in_collection'
     bl_label = 'Hide non active skin in collection'
-    bl_options = {'REGISTER'}
 
     coll_index: bpy.props.IntProperty()
 
@@ -234,29 +232,32 @@ class SKIS_OP_hide_all_non_active_skin(bpy.types.Operator):
 
     def execute(self, context):
 
-        hide_objs_in_coll(bpy.context.scene.collection)
+        hide_objs_in_coll(bpy.context.scene.collection, force_hide=True)
 
-        for index in range(0, len(bpy.context.scene.skis_skin_collection_list)):
+        for index in range(len(bpy.context.scene.skis_skin_collection_list)):
             if bpy.context.scene.skis_skin_collection_list[index].show:
-                unhide_objs(use_skin_collection_or_active(index).skis_active_skin)
+                for obj in use_skin_collection_or_active(index).all_objects:
+                    if obj.skis_hide_exclude or obj is use_skin_collection_or_active(index).skis_active_skin:
+                        unhide_objs(obj)
 
         return {'FINISHED'}
 
 
 class SKIS_OP_skin_jump_in_collection(bpy.types.Operator):
     bl_idname = 'skis.skin_jump_in_collection'
-    bl_label = 'To next skin in collection'
-    bl_options = {'REGISTER'}
+    bl_label = 'Jump to skin'
+    bl_description = 'Jump to skin in collection'
 
     coll_index: bpy.props.IntProperty()
-    options: bpy.props.EnumProperty(name='Jump options',
-                                    items=[
-                                        ('NEXT', 'Jump next', 'Jump to next skin'),
-                                        ('PREV', 'Jump previous', 'Jump to previous skin'),
-                                        ('FIRST', 'Jump first', 'Jump to first skin'),
-                                        ('LAST', 'Jump last', 'Jump to last skin'),
-                                    ]
-                                    )
+    options: bpy.props.EnumProperty(
+        name='Jump options',
+        items=[
+            ('NEXT', 'Jump next', 'Jump to next skin'),
+            ('PREV', 'Jump previous', 'Jump to previous skin'),
+            ('FIRST', 'Jump first', 'Jump to first skin'),
+            ('LAST', 'Jump last', 'Jump to last skin'),
+        ]
+    )
 
     def execute(self, context):
 

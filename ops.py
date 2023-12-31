@@ -110,11 +110,7 @@ class SKIS_OP_remove_skin_collection_in_list(bpy.types.Operator):
 
         scene = bpy.context.scene
 
-        scene.skis_skin_collection_list.remove(
-            scene.skis_skin_collection_list_index
-            if scene.skis_skin_collection_list_index
-            else 0
-        )
+        scene.skis_skin_collection_list.remove(scene.skis_skin_collection_list_index or 0)
         scene.skis_skin_collection_list_index = min(
             scene.skis_skin_collection_list_index,
             len(scene.skis_skin_collection_list) - 1,

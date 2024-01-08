@@ -251,7 +251,7 @@ def skin_list_side_panel(layout, index):
 
         op = col.operator('skis.skin_jump_in_collection',
                           text='',
-                          icon='ANCHOR_TOP',
+                          icon='TRIA_UP_BAR',
                           emboss=True
                           )
         op.coll_index = index
@@ -263,7 +263,7 @@ def skin_list_side_panel(layout, index):
         row.enabled = use_skin_collection_or_active(index).skis_active_skin != None
         op = row.operator('skis.skin_jump_in_collection',
                           text='',
-                          icon='TRIA_UP_BAR',
+                          icon='TRIA_UP',
                           emboss=True
                           )
         op.coll_index = index
@@ -275,7 +275,7 @@ def skin_list_side_panel(layout, index):
         row.enabled = use_skin_collection_or_active(index).skis_active_skin != None
         op = row.operator('skis.skin_jump_in_collection',
                           text='',
-                          icon='TRIA_DOWN_BAR',
+                          icon='TRIA_DOWN',
                           emboss=True,
                           )
         op.coll_index = index
@@ -285,7 +285,7 @@ def skin_list_side_panel(layout, index):
 
         op = col.operator('skis.skin_jump_in_collection',
                           text='',
-                          icon='ANCHOR_BOTTOM',
+                          icon='TRIA_DOWN_BAR',
                           emboss=True
                           )
         op.coll_index = index

@@ -204,6 +204,7 @@ def skin_list_side_panel(layout, index):
         box.scale_x = 0.7
 
         # skin collection item filter type
+
         row2 = row.row()
         row2.prop(collection_list[index],
                   'use_flt',
@@ -366,7 +367,7 @@ class SKIS_UL_skin_list(bpy.types.UIList):
 
     index: bpy.props.IntProperty()
 
-    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, index):
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname, _index):
 
         # sort skin in collection
 

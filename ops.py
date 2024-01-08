@@ -217,6 +217,10 @@ class SKIS_OP_hide_non_active_skin_in_collection(bpy.types.Operator):
         hide_objs_in_coll(coll)
         unhide_objs(coll.skis_active_skin)
 
+        for obj in coll.all_objects:
+            if obj.skis_hide_exclude:
+                unhide_objs(obj)
+
         coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
 
         return {'FINISHED'}

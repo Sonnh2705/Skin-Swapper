@@ -269,53 +269,49 @@ class SKIS_OP_skin_jump_in_collection(bpy.types.Operator):
 
         # get index
 
-        index = sort_coll.index(coll.skis_active_skin.name)
-
         match self.options:
-
             case 'NEXT':
-                new_index = index + 1
-                if new_index == len(sort_coll):
-                    new_index = 0
+                skin_index = sort_coll.index(coll.skis_active_skin.name)
+                index = skin_index + 1
+                if index == len(sort_coll):
+                    index = 0
             case 'PREV':
-                new_index = index - 1
+                skin_index = sort_coll.index(coll.skis_active_skin.name)
+                index = skin_index - 1
             case 'FIRST':
-                new_index = 0
+                index = 0
             case 'LAST':
-                new_index = len(sort_coll) - 1
+                index = -1
 
-        coll.skis_active_skin = coll.all_objects[sort_coll[new_index]]
+        coll.skis_active_skin = coll.all_objects[sort_coll[index]]
 
         # skip hide viewport, hide exclude and filtered items
 
         is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
         is_hide_viewport = coll.skis_active_skin.hide_viewport
-        # is_exclude = coll.skis_active_skin.skis_hide_exclude
 
         if not collection_list[self.coll_index].use_flt:
             is_flt = False
 
         while is_hide_viewport or is_flt:
-            # while is_hide_viewport or is_flt or is_exclude:
 
-            index = sort_coll.index(coll.skis_active_skin.name)
+            skin_index = sort_coll.index(coll.skis_active_skin.name)
 
             match self.options:
                 case 'NEXT':
-                    new_index = index + 1
-                    if new_index == len(sort_coll):
-                        new_index = 0
+                    index = skin_index + 1
+                    if index == len(sort_coll):
+                        index = 0
                 case 'PREV':
-                    new_index = index - 1
+                    index = skin_index - 1
                 case 'FIRST':
-                    new_index = index + 1
+                    index = skin_index + 1
                 case 'LAST':
-                    new_index = index - 1
+                    index = skin_index - 1
 
-            coll.skis_active_skin = coll.all_objects[sort_coll[new_index]]
+            coll.skis_active_skin = coll.all_objects[sort_coll[index]]
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
-            # is_exclude = coll.skis_active_skin.skis_hide_exclude
 
             if collection_list[self.coll_index].use_flt:
                 is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type

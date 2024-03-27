@@ -55,7 +55,7 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
         # move to first
         op = col.operator('skis.move_skin_collection_in_list',
                           text='',
-                          icon='ANCHOR_TOP',
+                          icon='TRIA_UP_BAR',
                           emboss=True
                           )
         op.direction = 'FIRST'
@@ -76,7 +76,7 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
         # move to last
         op = col.operator('skis.move_skin_collection_in_list',
                           text='',
-                          icon='ANCHOR_BOTTOM',
+                          icon='TRIA_DOWN_BAR',
                           emboss=True
                           )
         op.direction = 'LAST'
@@ -105,6 +105,7 @@ class SKIS_PT_side_panel_skin_list(bpy.types.Panel):
         col = row.column(align=True)
         col.operator('skis.hide_all_non_active_skin', icon='GROUP_VERTEX')
         col.scale_y = 1.6
+
         # skin collections
 
         for index in range(len(bpy.context.scene.skis_skin_collection_list)):
@@ -119,18 +120,37 @@ def skin_list_side_panel(context, layout, index):
 
     collection_list = bpy.context.scene.skis_skin_collection_list
 
+    # get obj in collection
+
+    if collection_list[index].skin_coll:
+        obj = [
+            i for i in collection_list[index].skin_coll.all_objects
+        ]
+    elif collection_list[index].skin_coll is None:
+        obj = [
+            i for i in bpy.context.collection.all_objects
+        ]
+
     # get filtered skins
 
     if collection_list[index].use_flt:
         filtered_obj = [
-            x for x in collection_list[index].skin_coll.all_objects if x.type == collection_list[index].flt_type
+            j for j in obj if j.type == collection_list[index].flt_type
         ]
     else:
         filtered_obj = [
-            x for x in collection_list[index].skin_coll.all_objects
+            j for j in obj
         ]
 
-    is_active_exist = collection_list[index].skin_coll.skis_active_skin in filtered_obj
+    # get active skin existance
+
+    is_active_exist = False
+    if collection_list[index].skin_coll:
+        is_active_exist = collection_list[index].skin_coll.skis_active_skin in filtered_obj
+    else:
+        is_active_exist = context.collection.skis_active_skin in filtered_obj
+
+    # layout
 
     row = layout.row(align=True)
 
@@ -165,16 +185,18 @@ def skin_list_side_panel(context, layout, index):
     # set collection button
 
     col = row.column()
+    col.scale_x = 1.2
     op = col.operator('skis.set_skin_collection',
-                      text='Set',
+                      text='',
                       icon='PINNED'
                       )
-    col.scale_x = 0.5
     op.index = index
 
     # to outliner button
 
-    op2 = row.operator('skis.to_outliner',
+    col = row.column()
+    col.scale_x = 1.2
+    op2 = col.operator('skis.to_outliner',
                        text='',
                        icon='ZOOM_SELECTED'
                        )
@@ -194,15 +216,13 @@ def skin_list_side_panel(context, layout, index):
 
     # skin collection hide viewport
 
-    if collection_list[index].skin_coll is not None:
+    if collection_list[index].skin_coll:
         row.prop(collection_list[index].skin_coll,
                  'hide_viewport', text='', emboss=False)
-    else:
-        row.label(icon='RESTRICT_VIEW_ON')
 
     # under collapse line
 
-    if not collection_list[index].collapse and not collection_list[index].skin_coll.hide_viewport:
+    if not collection_list[index].collapse:
 
         row = layout.row(align=True)
 
@@ -231,7 +251,6 @@ def skin_list_side_panel(context, layout, index):
                       'flt_type',
                       text='',
                       )
-        flt_type.enabled = collection_list[index].use_flt
 
         # skin collection list
 
@@ -310,55 +329,54 @@ class SKIS_UL_collection_list(bpy.types.UIList):
 
         # show property
 
-        row = layout.row(align=True)
-        row.prop(item,
-                 'show',
-                 text='',
-                 emboss=True,
-                 )
-        row.scale_x = 0.6
+        show_row = layout.row(align=True)
+        show_row.prop(item,
+                      'show',
+                      text='',
+                      emboss=True,
+                      )
+        show_row.scale_x = 0.6
 
         # index property
 
-        row = layout.row()
-        row.label(text=f'{index + 1}')
-        row.scale_x = .09
+        index_row = layout.row()
+        index_row.label(text=f'{index + 1}')
+        index_row.scale_x = .09
 
-        row = layout.row()
-        op = row.operator('skis.to_outliner',
-                          text='',
-                          icon='ZOOM_SELECTED',
-                          emboss=True
-                          )
-        op.type = 'COLLECTION'
-        op.coll_index = index
+        # to outliner op
+
+        to_outliner_row = layout.row()
+        to_outliner_op = to_outliner_row.operator('skis.to_outliner',
+                                                  text='',
+                                                  icon='ZOOM_SELECTED',
+                                                  emboss=True
+                                                  )
+        to_outliner_op.type = 'COLLECTION'
+        to_outliner_op.coll_index = index
 
         # skin collection property
 
-        row = layout.row()
-        row.prop(item,
-                 'skin_coll',
-                 text='',
-                 emboss=True,
-                 icon=('NONE'
-                       if item.skin_coll is None or item.skin_coll.color_tag == 'NONE'
-                       else f'COLLECTION_{item.skin_coll.color_tag}'
-                       )
-                 )
-        row.scale_x = 0.65
-        row.alignment = 'LEFT'
+        skin_coll_row = layout.row()
+        skin_coll_row.prop(item,
+                           'skin_coll',
+                           text='',
+                           emboss=True,
+                           icon=('NONE'
+                                 if item.skin_coll is None or item.skin_coll.color_tag == 'NONE'
+                                 else f'COLLECTION_{item.skin_coll.color_tag}'
+                                 )
+                           )
+        skin_coll_row.scale_x = 0.65
 
         # hide viewport property
 
-        row = layout.row()
+        hide_viewport_row = layout.row()
         if item.skin_coll:
-            row.prop(item.skin_coll,
-                     'hide_viewport',
-                     text='',
-                     emboss=False,
-                     )
-        else:
-            row.label(icon='RESTRICT_VIEW_ON')
+            hide_viewport_row.prop(item.skin_coll,
+                                   'hide_viewport',
+                                   text='',
+                                   emboss=False,
+                                   )
 
 # skin collection UILIST class
 
@@ -378,66 +396,91 @@ class SKIS_UL_skin_list(bpy.types.UIList):
             sort_coll = data.all_objects.keys().copy()
         sort_coll.sort(key=str.casefold)
 
+        # skin index in sorted collection
+
         index = sort_coll.index(item.name)
+
+        # get all parent collections
+
+        parent_collections = [i for i in bpy.data.collections[:] if item.users_collection[0] in i.children_recursive]
+        # get all parent collections hide viewport
+        parent_colls_hide_viewport = [j.hide_viewport for j in parent_collections]
+        # get highest in hierachy collection hide viewport
+        is_parent_colls_hide_viewport = False
+        for i in parent_colls_hide_viewport:
+            if i == True:
+                is_parent_colls_hide_viewport = True
+                break
+
+        # get collection in use hide viewport
+        is_coll_hide_viewport = item.users_collection[0].hide_viewport or is_parent_colls_hide_viewport
+
+        # get skin hide viewport
+        is_item_enable = not item.hide_viewport and not is_coll_hide_viewport
 
         # item prop
 
-        row = layout.row()
-        row.scale_x = .8
-        row.enabled = not item.hide_viewport
-        op = row.operator('skis.to_active_skin_in_collection',
-                          text='',
-                          emboss=False,
-                          icon=('GHOST_ENABLED'
-                                if item == use_skin_collection_or_active(int(self.list_id)).skis_active_skin else
-                                'GHOST_DISABLED'
-                                )
-                          )
-        op.skin_name = item.name
-        op.coll_index = int(self.list_id)
+        # to active skin op
 
-        row = layout.row()
-        # row.scale_x = .8
-        row.alert = True
-        row.enabled = not item.hide_viewport
-        # row.label(icon=f'OUTLINER_OB_{item.type}')
-        op = row.operator('skis.to_outliner',
-                          text='',
-                          emboss=True,
-                          icon=f'OUTLINER_OB_{item.type}',
-                          )
-        op.skin_name = item.name
-        op.coll_index = int(self.list_id)
-        op.type = 'OBJECT'
+        to_active_skin_row = layout.row()
+        to_active_skin_row.scale_x = .8
+        to_active_skin_row.enabled = is_item_enable
+        to_active_skin_op = to_active_skin_row.operator('skis.to_active_skin_in_collection',
+                                                        text='',
+                                                        emboss=False,
+                                                        icon=('GHOST_ENABLED'
+                                                              if item == use_skin_collection_or_active(int(self.list_id)).skis_active_skin else
+                                                              'GHOST_DISABLED'
+                                                              )
+                                                        )
+        to_active_skin_op.skin_name = item.name
+        to_active_skin_op.coll_index = int(self.list_id)
 
-        row = layout.row()
-        row.enabled = not item.hide_viewport
-        row.prop(item, 'name', text='', emboss=False,)
+        # to outliner op
 
-        box = layout.box()
-        box.enabled = not item.hide_viewport
-        box.label(text=f'{index + 1}')
-        box.scale_x = 0.12
-        box.scale_y = 0.5
+        to_outliner_row = layout.row()
+        to_outliner_row.alert = not is_item_enable
+        to_outliner_op = to_outliner_row.operator('skis.to_outliner',
+                                                  text='',
+                                                  emboss=True,
+                                                  icon=f'OUTLINER_OB_{item.type}',
+                                                  )
+        to_outliner_op.skin_name = item.name
+        to_outliner_op.coll_index = int(self.list_id)
+        to_outliner_op.type = 'OBJECT'
 
-        row = layout.row()
-        row.scale_x = .9
-        row.prop(item,
-                 'skis_hide_exclude',
-                 text='',
-                 icon=('FAKE_USER_ON'
-                       if item.skis_hide_exclude == True
-                       else 'FAKE_USER_OFF'
-                       ),
-                 emboss=False,
-                 )
-        row.prop(item,
-                 'hide_viewport',
-                 text='',
-                 emboss=False
-                 )
+        # name prop
 
-        # operator
+        name_row = layout.row()
+        name_row.prop(item, 'name', text='', emboss=False,)
+
+        # index prop
+
+        index_box = layout.box()
+        index_box.enabled = is_item_enable
+        index_box.alert = not is_item_enable
+        index_box.label(text=f'{index + 1}')
+        index_box.scale_x = 0.12
+        index_box.scale_y = 0.5
+
+        # hide exclude prop
+
+        hide_exclude_row = layout.row()
+        hide_exclude_row.scale_x = .9
+        hide_exclude_row.prop(item,
+                              'skis_hide_exclude',
+                              text='',
+                              icon=('FAKE_USER_ON'
+                                    if item.skis_hide_exclude == True
+                                    else 'FAKE_USER_OFF'
+                                    ),
+                              emboss=False,
+                              )
+        hide_exclude_row.prop(item,
+                              'hide_viewport',
+                              text='',
+                              emboss=False
+                              )
 
     def filter_items(self, context, data, property):
 
@@ -446,14 +489,14 @@ class SKIS_UL_skin_list(bpy.types.UIList):
 
         flt_item = []
 
-        if self.filter_name:
-            flt_item = bpy.types.UI_UL_list.filter_items_by_name(
-                self.filter_name,
-                self.bitflag_filter_item,
-                item,
-                'name',
-                reverse=self.use_filter_sort_reverse
-            )
+        # if self.filter_name:
+        #     flt_item = bpy.types.UI_UL_list.filter_items_by_name(
+        #         self.filter_name,
+        #         self.bitflag_filter_item,
+        #         item,
+        #         'name',
+        #         reverse=self.use_filter_sort_reverse
+        #     )
 
         use_filter = collection_list[int(self.list_id)].use_flt
         obj_type = collection_list[int(self.list_id)].flt_type

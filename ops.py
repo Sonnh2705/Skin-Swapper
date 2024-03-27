@@ -9,10 +9,10 @@ from .pref import prefs
 
 def use_skin_collection_or_active(index=0):
 
-    if bpy.context.scene.skis_skin_collection_list[index].skin_coll is None:
-        return bpy.context.collection
-    else:
+    if bpy.context.scene.skis_skin_collection_list[index].skin_coll:
         return bpy.context.scene.skis_skin_collection_list[index].skin_coll
+    else:
+        return bpy.context.collection
 
 
 def hide_objs_in_coll(collection, force_hide=False):

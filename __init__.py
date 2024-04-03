@@ -35,8 +35,8 @@ bl_info = {
     "name": "Skin swapper",
     "author": "SonNH",
     "description": "Tools for managing multiple mesh and armature as skin for game",
-    "blender": (3, 3, 0),
-    "version": (1, 0, 0),
+    "blender": (4, 0, 0),
+    "version": (1, 4, 0),
     "location": "Sidebar -> SkiS",
     "category": "3D View"
 }

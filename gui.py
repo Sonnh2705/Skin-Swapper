@@ -389,11 +389,12 @@ class SKIS_UL_skin_list(bpy.types.UIList):
 
         # sort skin in collection
 
-        if data is context.view_layer.layer_collection.collection:
-            data = context.view_layer.objects
-            sort_coll = data.keys().copy()
-        else:
-            sort_coll = data.all_objects.keys().copy()
+        # if data is context.view_layer.layer_collection.collection:
+        #     data = context.view_layer.objects
+        #     sort_coll = data.keys().copy()
+        # else:
+        #     sort_coll = data.all_objects.keys().copy()
+        sort_coll = data.all_objects.keys().copy()
         sort_coll.sort(key=str.casefold)
 
         # skin index in sorted collection

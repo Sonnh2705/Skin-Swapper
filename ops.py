@@ -27,7 +27,7 @@ def hide_objs_in_coll(collection, force_hide=False):
 
 def unhide_objs(obj):
 
-    if obj is not None:
+    if obj:
         obj.hide_set(state=False)
 
 
@@ -163,9 +163,9 @@ class SKIS_OP_skin_collection_batch_setting(bpy.types.Operator):
 
     def execute(self, context):
 
-        for i in range(len(bpy.context.scene.skis_skin_collection_list)):
+        for i in context.scene.skis_skin_collection_list:
 
-            bpy.context.scene.skis_skin_collection_list[i].collapse = self.collapse
+            i.collapse = self.collapse
 
         return {'FINISHED'}
 
@@ -232,10 +232,10 @@ class SKIS_OP_hide_all_non_active_skin(bpy.types.Operator):
 
     def execute(self, context):
 
-        hide_objs_in_coll(bpy.context.scene.collection, force_hide=True)
+        hide_objs_in_coll(context.scene.collection, force_hide=True)
 
-        for index in range(len(bpy.context.scene.skis_skin_collection_list)):
-            if bpy.context.scene.skis_skin_collection_list[index].show:
+        for index in range(len(context.scene.skis_skin_collection_list)):
+            if context.scene.skis_skin_collection_list[index].show:
                 for obj in use_skin_collection_or_active(index).all_objects:
                     if obj.skis_hide_exclude or obj is use_skin_collection_or_active(index).skis_active_skin:
                         unhide_objs(obj)
@@ -267,16 +267,17 @@ class SKIS_OP_skin_jump_in_collection(bpy.types.Operator):
 
         hide_objs_in_coll(coll)
 
+        if coll.skis_active_skin:
+            skin_index = sort_coll.index(coll.skis_active_skin.name)
+
         # get index
 
         match self.options:
             case 'NEXT':
-                skin_index = sort_coll.index(coll.skis_active_skin.name)
                 index = skin_index + 1
                 if index == len(sort_coll):
                     index = 0
             case 'PREV':
-                skin_index = sort_coll.index(coll.skis_active_skin.name)
                 index = skin_index - 1
             case 'FIRST':
                 index = 0
@@ -293,7 +294,14 @@ class SKIS_OP_skin_jump_in_collection(bpy.types.Operator):
         if not collection_list[self.coll_index].use_flt:
             is_flt = False
 
+        step = 0
+
         while is_hide_viewport or is_flt:
+
+            step += 1
+
+            if step == len(sort_coll):
+                break
 
             skin_index = sort_coll.index(coll.skis_active_skin.name)
 

@@ -11,7 +11,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-from bpy.app.handlers import persistent
 import bpy
 
 from .ops import (SKIS_OP_to_outliner,
@@ -24,10 +23,14 @@ from .ops import (SKIS_OP_to_outliner,
                   SKIS_OP_hide_non_active_skin_in_collection,
                   SKIS_OP_hide_all_non_active_skin,
                   SKIS_OP_skin_jump_in_collection,
+                  SKIS_OP_highlight_skin,
                   )
 from .gui import (SKIS_PT_side_panel_collection_list,
                   SKIS_PT_side_panel_skin_list,
-                  SKIS_UL_skin_list, SKIS_UL_collection_list
+                  SKIS_UL_skin_list,
+                  SKIS_UL_collection_list,
+                  register_ops_to_menu,
+                  unregister_ops_to_menu,
                   )
 from .pref import SKIS_preferences
 
@@ -61,6 +64,7 @@ class SKIS_PG_skin_collection(bpy.types.PropertyGroup):
     skin_coll: bpy.props.PointerProperty(name='Skin collection',
                                          type=bpy.types.Collection,
                                          )
+    is_local: bpy.props.BoolProperty(default=False)
     collapse: bpy.props.BoolProperty(name='Skin collection collapse', default=False)
     show: bpy.props.BoolProperty(name='Skin collection visible', default=True)
     use_flt: bpy.props.BoolProperty(name='Filter item in collection',
@@ -88,6 +92,7 @@ classes = (SKIS_PG_skin_collection,
            SKIS_OP_hide_non_active_skin_in_collection,
            SKIS_OP_hide_all_non_active_skin,
            SKIS_OP_skin_jump_in_collection,
+           SKIS_OP_highlight_skin,
            SKIS_PT_side_panel_collection_list,
            SKIS_PT_side_panel_skin_list,
            SKIS_UL_skin_list,
@@ -96,8 +101,7 @@ classes = (SKIS_PG_skin_collection,
            )
 
 
-@persistent
-def load_handler(dummy):
+def skis_init_skin_coll(dummy):
 
     if len(bpy.context.scene.skis_skin_collection_list) < 1:
         bpy.context.scene.skis_skin_collection_list.add()
@@ -113,7 +117,7 @@ def register():
         type=SKIS_PG_skin_collection
     )
     bpy.types.Scene.skis_skin_collection_list_index = bpy.props.IntProperty(
-        default=0
+        default=-1
     )
     bpy.types.Collection.skis_list_index = bpy.props.IntProperty(
         default=0
@@ -121,11 +125,16 @@ def register():
     bpy.types.Collection.skis_active_skin = bpy.props.PointerProperty(
         type=bpy.types.Object
     )
+    bpy.types.Collection.skis_is_local = bpy.props.BoolProperty(
+        default=False,
+    )
     bpy.types.Object.skis_hide_exclude = bpy.props.BoolProperty(
         default=False,
     )
 
-    bpy.app.handlers.load_post.append(load_handler)
+    bpy.app.handlers.load_post.append(skis_init_skin_coll)
+
+    register_ops_to_menu()
 
 
 def unregister():
@@ -139,3 +148,5 @@ def unregister():
     del bpy.types.Collection.skis_list_index
     del bpy.types.Collection.skis_active_skin
     del bpy.types.Object.skis_hide_exclude
+
+    unregister_ops_to_menu()

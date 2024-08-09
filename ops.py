@@ -1,8 +1,5 @@
-import typing
 import bpy
-from bpy.types import Context, Event
 
-from .pref import prefs
 
 # FUNCTION
 
@@ -34,9 +31,13 @@ def unhide_objs(obj):
 def sort_item_in_collection(index):
 
     if use_skin_collection_or_active(index) is bpy.context.view_layer.layer_collection.collection:
-        sort_coll = bpy.context.view_layer.objects.keys().copy()
+        coll = bpy.context.view_layer.objects
     else:
-        sort_coll = use_skin_collection_or_active(index).all_objects.keys().copy()
+        coll = use_skin_collection_or_active(index).all_objects
+        if use_skin_collection_or_active(index).skis_is_local:
+            coll = use_skin_collection_or_active(index).objects
+
+    sort_coll = coll.keys().copy()
     sort_coll.sort(key=str.casefold)
 
     return sort_coll
@@ -177,6 +178,10 @@ class SKIS_OP_set_skin_collection(bpy.types.Operator):
 
     index: bpy.props.IntProperty()
 
+    @classmethod
+    def poll(cls, context):
+        return context.collection
+
     def execute(self, context):
 
         bpy.context.scene.skis_skin_collection_list[self.index].skin_coll = bpy.context.collection
@@ -267,24 +272,27 @@ class SKIS_OP_skin_jump_in_collection(bpy.types.Operator):
 
         hide_objs_in_coll(coll)
 
-        if coll.skis_active_skin:
-            skin_index = sort_coll.index(coll.skis_active_skin.name)
-
         # get index
 
         match self.options:
             case 'NEXT':
+                skin_index = sort_coll.index(coll.skis_active_skin.name)
                 index = skin_index + 1
                 if index == len(sort_coll):
                     index = 0
             case 'PREV':
+                skin_index = sort_coll.index(coll.skis_active_skin.name)
                 index = skin_index - 1
             case 'FIRST':
                 index = 0
             case 'LAST':
                 index = -1
 
-        coll.skis_active_skin = coll.all_objects[sort_coll[index]]
+        objs = coll.all_objects
+        if use_skin_collection_or_active(self.coll_index).skis_is_local:
+            objs = coll.objects
+
+        coll.skis_active_skin = objs[sort_coll[index]]
 
         # skip hide viewport, hide exclude and filtered items
 
@@ -317,15 +325,56 @@ class SKIS_OP_skin_jump_in_collection(bpy.types.Operator):
                 case 'LAST':
                     index = skin_index - 1
 
-            coll.skis_active_skin = coll.all_objects[sort_coll[index]]
+            coll.skis_active_skin = objs[sort_coll[index]]
 
             is_hide_viewport = coll.skis_active_skin.hide_viewport
 
             if collection_list[self.coll_index].use_flt:
                 is_flt = coll.skis_active_skin.type != collection_list[self.coll_index].flt_type
 
-        unhide_objs(coll.all_objects[coll.skis_active_skin.name])
+        unhide_objs(coll.skis_active_skin)
 
-        coll.skis_list_index = coll.all_objects.keys().index(coll.skis_active_skin.name)
+        coll.skis_list_index = objs.keys().index(coll.skis_active_skin.name)
+
+        return {'FINISHED'}
+
+
+class SKIS_OP_highlight_skin(bpy.types.Operator):
+    bl_idname = 'skis.highlight_skin'
+    bl_label = '[Skis] Highlight skin'
+    bl_description = 'Highlight skin in collection'
+
+    def execute(self, context):
+
+        coll = context.scene.skis_skin_collection_list
+        collections = []
+
+        for index in range(len(coll)):
+            collections.append(use_skin_collection_or_active(index))
+
+        if context.object:
+            obj_coll = context.object.users_collection[0]
+
+        coll_index = []
+        for index, co in enumerate(collections):
+            if obj_coll == co:
+                coll_index.append(index)
+
+        for index, co in enumerate(coll):
+
+            co.collapse = True
+
+            objs = use_skin_collection_or_active(index).all_objects
+            if co.is_local:
+                objs = use_skin_collection_or_active(index).objects
+
+            if index in coll_index:
+                co.collapse = False
+                use_skin_collection_or_active(index).skis_list_index = objs.keys().index(context.object.name)
+
+        for region in context.area.regions:
+            if region.type == 'UI':
+                region.active_panel_category = bpy.types.SKIS_PT_side_panel_collection_list.bl_category
+                region.tag_redraw()
 
         return {'FINISHED'}

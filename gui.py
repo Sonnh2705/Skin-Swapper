@@ -108,34 +108,44 @@ class SKIS_PT_side_panel_skin_list(bpy.types.Panel):
 
         # skin collections
 
-        for index in range(len(bpy.context.scene.skis_skin_collection_list)):
-            if bpy.context.scene.skis_skin_collection_list[index].show:
-                skin_list_side_panel(context, layout, index)
+        for index, collection in enumerate(bpy.context.scene.skis_skin_collection_list):
+            if collection.show:
+                skin_list_side_panel(context, layout, index, collection)
 
 
 # skin collection panel func
 
 
-def skin_list_side_panel(context, layout, index):
+def skin_list_side_panel(context, layout, index, collection):
 
-    collection_list = bpy.context.scene.skis_skin_collection_list
+    coll = use_skin_collection_or_active(index)
+    use_all_objs = not coll.skis_is_local
 
     # get obj in collection
 
-    if collection_list[index].skin_coll:
+    if use_all_objs:
         obj = [
-            i for i in collection_list[index].skin_coll.all_objects
+            i for i in coll.all_objects
         ]
-    elif collection_list[index].skin_coll is None:
+    else:
         obj = [
-            i for i in bpy.context.collection.all_objects
+            i for i in coll.objects
         ]
+
+    # if collection.skin_coll:
+    #     obj = [
+    #         i for i in collection.skin_coll.all_objects
+    #     ]
+    # elif collection.skin_coll is None:
+    #     obj = [
+    #         i for i in bpy.context.collection.all_objects
+    #     ]
 
     # get filtered skins
 
-    if collection_list[index].use_flt:
+    if collection.use_flt:
         filtered_obj = [
-            j for j in obj if j.type == collection_list[index].flt_type
+            j for j in obj if j.type == collection.flt_type
         ]
     else:
         filtered_obj = [
@@ -144,11 +154,11 @@ def skin_list_side_panel(context, layout, index):
 
     # get active skin existance
 
-    is_active_exist = False
-    if collection_list[index].skin_coll:
-        is_active_exist = collection_list[index].skin_coll.skis_active_skin in filtered_obj
-    else:
-        is_active_exist = context.collection.skis_active_skin in filtered_obj
+    is_active_exist = coll.skis_active_skin in filtered_obj
+    # if collection.skin_coll:
+    #     is_active_exist = collection.skin_coll.skis_active_skin in filtered_obj
+    # else:
+    #     is_active_exist = context.collection.skis_active_skin in filtered_obj
 
     # layout
 
@@ -156,11 +166,11 @@ def skin_list_side_panel(context, layout, index):
 
     # skin collection collapse
 
-    row.prop(collection_list[index],
+    row.prop(collection,
              'collapse',
              text='',
              icon=('RIGHTARROW'
-                   if collection_list[index].collapse
+                   if collection.collapse
                    else 'DOWNARROW_HLT'
                    ),
              emboss=False,
@@ -168,7 +178,7 @@ def skin_list_side_panel(context, layout, index):
 
     # skin collection show hide
 
-    row.prop(collection_list[index],
+    row.prop(collection,
              'show',
              text='',
              emboss=True,
@@ -176,11 +186,11 @@ def skin_list_side_panel(context, layout, index):
 
     # skin collection index
 
-    box = row.box()
-    box.scale_x = 0.4
-    box.scale_y = 0.5
-    box.label(text=f'{index + 1}',)
-    box.alignment = 'CENTER'
+    index_box = row.box()
+    index_box.scale_x = 0.4
+    index_box.scale_y = 0.5
+    index_box.label(text=f'{index + 1}',)
+    index_box.alignment = 'CENTER'
 
     # set collection button
 
@@ -205,30 +215,45 @@ def skin_list_side_panel(context, layout, index):
 
     # skin collection prop
 
-    row.prop(collection_list[index],
+    row.prop(collection,
              'skin_coll',
              text='',
              icon=('NONE'
-                   if collection_list[index].skin_coll is None or collection_list[index].skin_coll.color_tag == 'NONE'
-                   else f'COLLECTION_{collection_list[index].skin_coll.color_tag}'
+                   if collection.skin_coll is None or collection.skin_coll.color_tag == 'NONE'
+                   else f'COLLECTION_{collection.skin_coll.color_tag}'
                    )
              )
 
     # skin collection hide viewport
 
-    if collection_list[index].skin_coll:
-        row.prop(collection_list[index].skin_coll,
+    if collection.skin_coll:
+        row.prop(collection.skin_coll,
                  'hide_viewport', text='', emboss=False)
 
     # under collapse line
 
-    if not collection_list[index].collapse:
+    if not collection.collapse:
 
-        row = layout.row(align=True)
+        under_collapse_row = layout.row(align=True)
+
+        is_local_col = under_collapse_row.column()
+        is_local_col.prop(coll,
+                          'skis_is_local',
+                          text=('All'
+                                if use_all_objs
+                                else 'Local'
+                                ),
+                          icon=('OUTLINER_OB_GROUP_INSTANCE'
+                                if use_all_objs
+                                else 'OUTLINER_COLLECTION'
+                                ),
+                          invert_checkbox=True
+                          )
+        is_local_col.scale_x = 0.6
 
         # skin count
 
-        count_box = row.box()
+        count_box = under_collapse_row.box()
         count_box.label(text=f'{len(filtered_obj)} skins')
         count_box.scale_y = 0.6
         count_box.scale_x = 0.7
@@ -236,18 +261,17 @@ def skin_list_side_panel(context, layout, index):
         # skin collection item filter type
 
         # use filter prop
-        filter = row.column()
-        filter.prop(collection_list[index],
-                    'use_flt',
-                    text='Filter',
-                    toggle=True,
-                    icon='FILTER',
-                    )
-        filter.scale_x = 0.6
+        filter_prop = under_collapse_row.column()
+        filter_prop.prop(collection,
+                         'use_flt',
+                         text='',
+                         toggle=True,
+                         icon='FILTER',
+                         )
 
         # filter type prop
-        flt_type = row.column()
-        flt_type.prop(collection_list[index],
+        flt_type = under_collapse_row.column()
+        flt_type.prop(collection,
                       'flt_type',
                       text='',
                       )
@@ -257,9 +281,12 @@ def skin_list_side_panel(context, layout, index):
         ui_list_row = layout.row(align=True)
         ui_list_row.template_list('SKIS_UL_skin_list',
                                   f'{index}',
-                                  use_skin_collection_or_active(index),
-                                  'all_objects',
-                                  use_skin_collection_or_active(index),
+                                  coll,
+                                  ('all_objects'
+                                   if use_all_objs
+                                   else 'objects'
+                                   ),
+                                  coll,
                                   'skis_list_index',
                                   )
         ui_list_row.separator(factor=0.5)
@@ -394,7 +421,11 @@ class SKIS_UL_skin_list(bpy.types.UIList):
         #     sort_coll = data.keys().copy()
         # else:
         #     sort_coll = data.all_objects.keys().copy()
-        sort_coll = data.all_objects.keys().copy()
+        sort_coll = (data.objects.keys().copy()
+                     if data.skis_is_local
+                     else data.all_objects.keys().copy()
+                     )
+
         sort_coll.sort(key=str.casefold)
 
         # skin index in sorted collection
@@ -409,7 +440,7 @@ class SKIS_UL_skin_list(bpy.types.UIList):
         # get highest in hierachy collection hide viewport
         is_parent_colls_hide_viewport = False
         for i in parent_colls_hide_viewport:
-            if i == True:
+            if i:
                 is_parent_colls_hide_viewport = True
                 break
 
@@ -457,12 +488,14 @@ class SKIS_UL_skin_list(bpy.types.UIList):
 
         # index prop
 
-        index_box = layout.box()
-        index_box.enabled = is_item_enable
-        index_box.alert = not is_item_enable
-        index_box.label(text=f'{index + 1}')
-        index_box.scale_x = 0.12
-        index_box.scale_y = 0.5
+        if prefs().show_skin_index:
+
+            index_box = layout.box()
+            index_box.enabled = is_item_enable
+            index_box.alert = not is_item_enable
+            index_box.label(text=f'{index + 1}')
+            index_box.scale_x = 0.12
+            index_box.scale_y = 0.5
 
         # hide exclude prop
 
@@ -472,7 +505,7 @@ class SKIS_UL_skin_list(bpy.types.UIList):
                               'skis_hide_exclude',
                               text='',
                               icon=('FAKE_USER_ON'
-                                    if item.skis_hide_exclude == True
+                                    if item.skis_hide_exclude
                                     else 'FAKE_USER_OFF'
                                     ),
                               emboss=False,
@@ -517,3 +550,16 @@ class SKIS_UL_skin_list(bpy.types.UIList):
         order = bpy.types.UI_UL_list.sort_items_by_name(item, 'name')
 
         return flt_item, order
+
+
+def SKIS_menu(self, context):
+    self.layout.separator()
+    self.layout.operator('skis.highlight_skin')
+
+
+def register_ops_to_menu():
+    bpy.types.VIEW3D_MT_object_context_menu.append(SKIS_menu)
+
+
+def unregister_ops_to_menu():
+    bpy.types.VIEW3D_MT_object_context_menu.remove(SKIS_menu)

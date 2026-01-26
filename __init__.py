@@ -12,6 +12,7 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import bpy
+from bpy.app.handlers import persistent
 
 from .ops import (SKIS_OP_to_outliner,
                   SKIS_OP_add_skin_collection_to_list,
@@ -101,6 +102,7 @@ classes = (SKIS_PG_skin_collection,
            )
 
 
+@persistent
 def skis_init_skin_coll(dummy):
 
     if len(bpy.context.scene.skis_skin_collection_list) < 1:

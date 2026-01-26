@@ -20,11 +20,12 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
 
         # layout.label(text='Skin collection list:')
 
-        row = layout.row(align=True)
+        ops_row = layout.row(align=True)
+        list_row = layout.row(align=True)
 
         # left panel operator, add, remove
 
-        col = row.column(align=True)
+        col = ops_row.row(align=True)
         # add
         col.operator('skis.add_skin_collection_to_list',
                      text='',
@@ -38,20 +39,10 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
                      emboss=True
                      )
 
-        # skin collection list
-
-        col = row.column(align=True)
-        col.template_list('SKIS_UL_collection_list',
-                          '1',
-                          bpy.context.scene,
-                          'skis_skin_collection_list',
-                          bpy.context.scene,
-                          'skis_skin_collection_list_index',
-                          )
-
         # right panel navigation operator
 
-        col = row.column(align=True)
+        col = ops_row.row(align=True)
+        col.alignment = 'RIGHT'
         # move to first
         op = col.operator('skis.move_skin_collection_in_list',
                           text='',
@@ -80,6 +71,18 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
                           emboss=True
                           )
         op.direction = 'LAST'
+
+        # skin collection list
+
+        col = list_row.column(align=True)
+        col.template_list('SKIS_UL_collection_list',
+                          '1',
+                          bpy.context.scene,
+                          'skis_skin_collection_list',
+                          bpy.context.scene,
+                          'skis_skin_collection_list_index',
+                          rows=3,
+                          )
 
 
 class SKIS_PT_side_panel_skin_list(bpy.types.Panel):
@@ -192,15 +195,15 @@ def skin_list_side_panel(context, layout, index, collection):
     index_box.label(text=f'{index + 1}',)
     index_box.alignment = 'CENTER'
 
-    # set collection button
+    # # set collection button
 
-    col = row.column()
-    col.scale_x = 1.2
-    op = col.operator('skis.set_skin_collection',
-                      text='',
-                      icon='PINNED'
-                      )
-    op.index = index
+    # col = row.column()
+    # col.scale_x = 1.2
+    # op = col.operator('skis.set_skin_collection',
+    #                   text='',
+    #                   icon='PINNED'
+    #                   )
+    # op.index = index
 
     # to outliner button
 
@@ -208,7 +211,7 @@ def skin_list_side_panel(context, layout, index, collection):
     col.scale_x = 1.2
     op2 = col.operator('skis.to_outliner',
                        text='',
-                       icon='ZOOM_SELECTED'
+                       icon='FILE_ALIAS'
                        )
     op2.type = 'COLLECTION'
     op2.coll_index = index
@@ -237,44 +240,49 @@ def skin_list_side_panel(context, layout, index, collection):
         under_collapse_row = layout.row(align=True)
 
         is_local_col = under_collapse_row.column()
-        is_local_col.prop(coll,
-                          'skis_is_local',
-                          text=('All'
-                                if use_all_objs
-                                else 'Local'
-                                ),
-                          icon=('OUTLINER_OB_GROUP_INSTANCE'
-                                if use_all_objs
-                                else 'OUTLINER_COLLECTION'
-                                ),
-                          invert_checkbox=True
+
+        if prefs().is_advance:
+
+            # is local
+
+            is_local_col.prop(coll,
+                              'skis_is_local',
+                              text=('All'
+                                    if use_all_objs
+                                    else 'Local'
+                                    ),
+                              icon=('OUTLINER_OB_GROUP_INSTANCE'
+                                    if use_all_objs
+                                    else 'OUTLINER_COLLECTION'
+                                    ),
+                              invert_checkbox=True
+                              )
+            is_local_col.scale_x = 0.6
+
+            # skin count
+
+            count_box = under_collapse_row.box()
+            count_box.label(text=f'{len(filtered_obj)} skins')
+            count_box.scale_y = 0.6
+            count_box.scale_x = 0.7
+
+            # skin collection item filter type
+
+            # use filter prop
+            filter_prop = under_collapse_row.column()
+            filter_prop.prop(collection,
+                             'use_flt',
+                             text='',
+                             toggle=True,
+                             icon='FILTER',
+                             )
+
+            # filter type prop
+            flt_type = under_collapse_row.column()
+            flt_type.prop(collection,
+                          'flt_type',
+                          text='',
                           )
-        is_local_col.scale_x = 0.6
-
-        # skin count
-
-        count_box = under_collapse_row.box()
-        count_box.label(text=f'{len(filtered_obj)} skins')
-        count_box.scale_y = 0.6
-        count_box.scale_x = 0.7
-
-        # skin collection item filter type
-
-        # use filter prop
-        filter_prop = under_collapse_row.column()
-        filter_prop.prop(collection,
-                         'use_flt',
-                         text='',
-                         toggle=True,
-                         icon='FILTER',
-                         )
-
-        # filter type prop
-        flt_type = under_collapse_row.column()
-        flt_type.prop(collection,
-                      'flt_type',
-                      text='',
-                      )
 
         # skin collection list
 
@@ -368,14 +376,14 @@ class SKIS_UL_collection_list(bpy.types.UIList):
 
         index_row = layout.row()
         index_row.label(text=f'{index + 1}')
-        index_row.scale_x = .09
+        index_row.scale_x = .05
 
         # to outliner op
 
         to_outliner_row = layout.row()
         to_outliner_op = to_outliner_row.operator('skis.to_outliner',
                                                   text='',
-                                                  icon='ZOOM_SELECTED',
+                                                  icon='FILE_ALIAS',
                                                   emboss=True
                                                   )
         to_outliner_op.type = 'COLLECTION'
@@ -488,7 +496,7 @@ class SKIS_UL_skin_list(bpy.types.UIList):
 
         # index prop
 
-        if prefs().show_skin_index:
+        if prefs().is_skin_index_show:
 
             index_box = layout.box()
             index_box.enabled = is_item_enable

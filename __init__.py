@@ -109,6 +109,14 @@ def skis_init_skin_coll(dummy):
         bpy.context.scene.skis_skin_collection_list.add()
 
 
+def set_active_view_layer(self, context):
+
+    if self.skis_active_view_layer < len(context.scene.view_layers):
+        context.window.view_layer = context.scene.view_layers[self.skis_active_view_layer]
+
+    return None
+
+
 def register():
 
     from bpy.utils import register_class
@@ -133,6 +141,10 @@ def register():
     bpy.types.Object.skis_hide_exclude = bpy.props.BoolProperty(
         default=False,
     )
+    bpy.types.Scene.skis_active_view_layer = bpy.props.IntProperty(
+        name='SkiS Preset',
+        update=set_active_view_layer
+    )
 
     bpy.app.handlers.load_post.append(skis_init_skin_coll)
 
@@ -149,6 +161,7 @@ def unregister():
     del bpy.types.Scene.skis_skin_collection_list_index
     del bpy.types.Collection.skis_list_index
     del bpy.types.Collection.skis_active_skin
+    del bpy.types.Collection.skis_is_local
     del bpy.types.Object.skis_hide_exclude
 
     unregister_ops_to_menu()

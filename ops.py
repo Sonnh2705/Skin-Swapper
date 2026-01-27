@@ -43,6 +43,28 @@ def sort_item_in_collection(index):
     return sort_coll
 
 
+def get_layer_coll_list(context):
+
+    child_list = []
+
+    def get_child_recursive(child):
+
+        for i in child.children:
+            child_list.append(i)
+            get_child_recursive(i)
+
+    get_child_recursive(context.view_layer.layer_collection)
+
+    return child_list
+
+
+def get_layer_coll(self, context):
+
+    for i in get_layer_coll_list(context):
+        if self == i.collection:
+            return i
+
+
 # OPERATOR
 
 

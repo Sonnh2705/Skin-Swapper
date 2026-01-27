@@ -1,10 +1,12 @@
 import bpy
 
-from .ops import use_skin_collection_or_active
+from .ops import use_skin_collection_or_active, get_layer_coll
 from .pref import prefs
 
 
 # side panel class
+
+view_layer_enum = ()
 
 
 class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
@@ -20,6 +22,7 @@ class SKIS_PT_side_panel_collection_list(bpy.types.Panel):
 
         # layout.label(text='Skin collection list:')
 
+        # layout.prop(context.scene, 'skis_active_view_layer', text='View Layer', emboss=True)
         ops_row = layout.row(align=True)
         list_row = layout.row(align=True)
 
@@ -230,18 +233,17 @@ def skin_list_side_panel(context, layout, index, collection):
     # skin collection hide viewport
 
     if collection.skin_coll:
-        row.prop(collection.skin_coll,
-                 'hide_viewport', text='', emboss=False)
+        row.prop(get_layer_coll(collection.skin_coll, context),
+                 'exclude', text='', emboss=False)
 
     # under collapse line
 
     if not collection.collapse:
 
-        under_collapse_row = layout.row(align=True)
-
-        is_local_col = under_collapse_row.column()
-
         if prefs().is_advance:
+            under_collapse_row = layout.row(align=True)
+
+            is_local_col = under_collapse_row.column()
 
             # is local
 
@@ -287,16 +289,15 @@ def skin_list_side_panel(context, layout, index, collection):
         # skin collection list
 
         ui_list_row = layout.row(align=True)
-        ui_list_row.template_list('SKIS_UL_skin_list',
-                                  f'{index}',
-                                  coll,
-                                  ('all_objects'
-                                   if use_all_objs
-                                   else 'objects'
-                                   ),
-                                  coll,
-                                  'skis_list_index',
-                                  )
+        ui_list_row.template_list(
+            'SKIS_UL_skin_list',
+            f'{index}',
+            coll,
+            ('all_objects' if use_all_objs else 'objects'
+             ),
+            coll,
+            'skis_list_index',
+        )
         ui_list_row.separator(factor=0.5)
 
         # hide non active button
@@ -406,9 +407,10 @@ class SKIS_UL_collection_list(bpy.types.UIList):
         # hide viewport property
 
         hide_viewport_row = layout.row()
+        # print(get_layer_coll(item.skin_coll, context))
         if item.skin_coll:
-            hide_viewport_row.prop(item.skin_coll,
-                                   'hide_viewport',
+            hide_viewport_row.prop(get_layer_coll(item.skin_coll, context),
+                                   'exclude',
                                    text='',
                                    emboss=False,
                                    )
